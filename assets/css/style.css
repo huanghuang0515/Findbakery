@@ -520,9 +520,6 @@ section[id], footer[id], main[id]{
 /* 上方的 .section 已提供 padding-bottom，此處不再疊加，
    否則頁尾前的留白會是其他分隔線的兩倍 */
 .divider--footer{ margin-block:0 var(--sp-block); }
-/* 移除頁尾上方的裝飾分隔線（線條與中央星花），保留原本的垂直間距 */
-.divider--footer::before{ display:none; }
-.divider--footer .star--divider{ display:none; }
 
 /* =========================================================
    商品／訂閱區塊
