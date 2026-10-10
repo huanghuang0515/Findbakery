@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>後台管理｜Gothel's Garden</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+      media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"></noscript>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="admin-body">
+
+<div class="admin">
+  <aside class="admin-side" id="adminSide">
+    <a class="admin-side__brand" href="admin.html">
+      <span class="admin-side__logo">Gothel's Garden</span>
+      <span class="admin-side__tag">後台管理系統</span>
+    </a>
+    <nav class="admin-nav" id="adminNav" aria-label="後台功能"></nav>
+    <div class="admin-side__foot">
+      <div class="admin-user" id="adminUser"></div>
+      <button class="btn btn--line btn--full" type="button" id="logoutBtn">登出</button>
+      <a class="admin-side__site" href="index.html">前往前台網站 →</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-top">
+      <button class="admin-burger" id="adminBurger" aria-label="開啟選單">☰</button>
+      <h1 class="admin-top__title" id="adminTitle">儀表板</h1>
+    </header>
+    <div class="admin-content" id="adminContent"></div>
+  </main>
+</div>
+
+<!-- 新增／編輯商品 Modal -->
+<div class="admin-modal" id="modal" hidden>
+  <div class="admin-modal__backdrop" data-close></div>
+  <div class="admin-modal__box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 class="admin-modal__title" id="modalTitle">新增商品</h2>
+    <form id="productForm" class="admin-form">
+      <div class="form-grid">
+        <div class="field field--full"><label for="pName">商品名稱</label><input id="pName" required></div>
+        <div class="field"><label for="pPrice">價格</label><input id="pPrice" type="number" min="0" required></div>
+        <div class="field"><label for="pStock">庫存</label><input id="pStock" type="number" min="0" required></div>
+        <div class="field"><label for="pCat">分類</label>
+          <select id="pCat"><option>麵包</option><option>西點</option><option>訂閱</option></select></div>
+        <div class="field"><label for="pUnit">單位</label><input id="pUnit" placeholder="每入"></div>
+        <div class="field"><label for="pImg">圖片</label>
+          <select id="pImg">
+            <option value="p-03">原味貝果</option><option value="p-04">酸種麵包</option>
+            <option value="p-05">奶油甜點</option><option value="p-06">黑芝麻餐包</option>
+            <option value="p-07">生吐司</option><option value="p-08">甜甜圈</option>
+            <option value="p-09">厚片吐司</option><option value="p-10">雜糧麵包</option>
+            <option value="p-01">可頌</option>
+          </select></div>
+        <div class="field field--full"><label for="pDesc">商品描述</label><textarea id="pDesc" rows="2"></textarea></div>
+      </div>
+      <div class="admin-modal__actions">
+        <button class="btn btn--line" type="button" data-close>取消</button>
+        <button class="btn btn--primary" type="submit" id="modalSave">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/admin-store.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

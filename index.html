@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gothel's Garden｜自然發酵．職人手作麵包</title>
+<meta name="description" content="Gothel's Garden 以天然酵母、當季小麥與時間慢慢養成的麵包。每日現烤、低糖低油，提供麵包訂閱、線上選購與烘焙課程。">
+<meta name="theme-color" content="#ffffff">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Gothel's Garden｜自然發酵．職人手作麵包">
+<meta property="og:description" content="天然酵母、當季小麥，每日現烤的職人麵包。">
+<meta property="og:image" content="assets/img/about-main.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字型以非阻塞方式載入：第三方樣式表若因離線／慢網卡住，不會阻擋首次繪製而白屏。
+     頁面先用備用字（Noto Serif TC／Georgia／system sans）繪製，字型到了再換上。 -->
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+      media="print" onload="this.media='all'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap">
+</noscript>
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+/* 開場 gating：在首次繪製前決定是否播放 Loading 與首屏進場。
+   放在 <head> 可避免內容閃現；不依賴 main.js，故 main.js 失敗時內容仍可見。 */
+(function () {
+  var d = document.documentElement;
+  d.classList.add('js');
+  try {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* 每次載入都播放開場（不再以 sessionStorage 記錄是否看過） */
+    var q = location.search + location.hash;
+    var skip = /[?&#]nointro\b/.test(q);          /* 深連結／QA 用：直接跳過開場 */
+    /* ?replay 為使用者明確要求，會覆寫 prefers-reduced-motion；
+       自動播放仍完全尊重減少動態設定。 */
+    var forced = /[?&#]replay\b/.test(q);
+
+    if ((!reduce && !skip) || forced) {
+      d.classList.add('is-intro');   /* 顯示 Loading，並讓首屏元素進入隱藏初始態 */
+      if (forced) d.classList.add('force-intro');
+    } else {
+      d.classList.add('anim-in'); /* 直接顯示首屏（減少動態／?nointro） */
+    }
+    /* 安全逾時：無論如何 4.5s 後強制解除開場遮罩，Loading 不得永久遮住網站 */
+    window.__ggIntroSafety = setTimeout(function () {
+      d.classList.remove('is-intro');
+      d.classList.add('anim-in');
+      var ov = document.getElementById('intro');
+      if (ov) { ov.setAttribute('hidden', ''); }
+    }, 4500);
+  } catch (err) {
+    d.classList.remove('is-intro');
+    d.classList.add('anim-in');
+  }
+})();
+</script>
+</head>
+<body>
+
+<!-- ============ 品牌開場 Loading ============ -->
+<div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="品牌開場動畫">
+  <div class="intro__inner">
+    <p class="brand intro__brand" aria-hidden="true"><span>Gothel's</span><span>Garden</span></p>
+
+    <div class="intro__flower" aria-hidden="true">
+      <svg viewBox="0 0 200 200" role="img" aria-label="八瓣星花線稿逐漸盛開">
+        <defs>
+          <!-- 單片花瓣（指向上方），其餘七片由旋轉產生 -->
+          <path id="intro-petal" pathLength="1"
+                d="M100,100 C81,74 81,42 100,22 C119,42 119,74 100,100 Z"/>
+        </defs>
+
+        <!-- 極淡底稿：完整八瓣 -->
+        <g class="intro__petals-bg">
+          <use href="#intro-petal" transform="rotate(0 100 100)"/>
+          <use href="#intro-petal" transform="rotate(45 100 100)"/>
+          <use href="#intro-petal" transform="rotate(90 100 100)"/>
+          <use href="#intro-petal" transform="rotate(135 100 100)"/>
+          <use href="#intro-petal" transform="rotate(180 100 100)"/>
+          <use href="#intro-petal" transform="rotate(225 100 100)"/>
+          <use href="#intro-petal" transform="rotate(270 100 100)"/>
+          <use href="#intro-petal" transform="rotate(315 100 100)"/>
+        </g>
+
+        <!-- 描線：逐瓣描繪（各瓣 --i 控制起始延遲，略微重疊） -->
+        <g class="intro__petals">
+          <use class="intro__petal" href="#intro-petal" transform="rotate(0 100 100)"   style="--i:0"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(45 100 100)"  style="--i:1"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(90 100 100)"  style="--i:2"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(135 100 100)" style="--i:3"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(180 100 100)" style="--i:4"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(225 100 100)" style="--i:5"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(270 100 100)" style="--i:6"/>
+          <use class="intro__petal" href="#intro-petal" transform="rotate(315 100 100)" style="--i:7"/>
+        </g>
+
+        <!-- 外圈：由頂端順時針畫一圈（rotate -90 讓起點在正上方） -->
+        <circle class="intro__ring" cx="100" cy="100" r="92" pathLength="1"
+                transform="rotate(-90 100 100)"/>
+        <!-- 圓弧末端的小圓點：繞中心一圈後停在頂端 -->
+        <g class="intro__dot"><circle cx="100" cy="8" r="3.4"/></g>
+      </svg>
+    </div>
+
+    <p class="intro__count" aria-hidden="true"><span id="introCount">03</span></p>
+    <p class="intro__en" aria-hidden="true">A MOMENT TO BLOOM</p>
+    <p class="intro__zh">美好，正在緩緩盛開</p>
+
+    <button class="intro__skip" id="introSkip" type="button">略過開場</button>
+  </div>
+</div>
+
+<a class="skip-link" href="#main">跳至主要內容</a>
+
+<!-- 裝飾星形符號：八角星（分隔線／首屏）與四角星（標題旁） -->
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+  <defs>
+    <polygon id="star8" points="50,0 54.21,39.84 71.92,28.08 60.16,45.79 100,50 60.16,54.21 71.92,71.92 54.21,60.16 50,100 45.79,60.16 28.08,71.92 39.84,54.21 0,50 39.84,45.79 28.08,28.08 45.79,39.84"/>
+    <polygon id="star4" points="50,0 58.49,41.51 100,50 58.49,58.49 50,100 41.51,58.49 0,50 41.51,41.51"/>
+  </defs>
+</svg>
+
+<!-- ============ 頁首 ============ -->
+<header class="site-header" id="siteHeader">
+  <div class="header-bar">
+    <div class="shell">
+      <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false" aria-controls="mainNav">
+        <span></span><span></span><span></span>
+      </button>
+
+      <a class="brand" href="#top" aria-label="Gothel's Garden 首頁">
+        <span>Gothel's</span>
+        <span>Garden</span>
+      </a>
+
+      <div class="header-tools">
+        <button class="icon-btn" id="searchToggle" aria-label="搜尋" aria-expanded="false" aria-controls="searchPanel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><line x1="15.8" y1="15.8" x2="21" y2="21"/></svg>
+        </button>
+        <a class="icon-btn" href="member.html" aria-label="會員中心">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-6.6 7.5-6.6s7.5 2.4 7.5 6.6"/></svg>
+        </a>
+        <a class="icon-btn icon-btn--cart" href="cart.html" aria-label="購物車">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1.1 12.2H7.1z"/><path d="M9 8V6.2A3 3 0 0 1 12 3a3 3 0 0 1 3 3.2V8"/></svg>
+          <span class="cart-count" id="cartCount" hidden>0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-panel" id="searchPanel" hidden>
+    <form class="shell search-form" role="search" onsubmit="return false">
+      <input type="search" id="searchInput" placeholder="搜尋麵包、課程或文章…" aria-label="搜尋網站">
+      <button type="submit" class="btn-line">搜尋</button>
+    </form>
+  </div>
+
+  <nav class="main-nav" id="mainNav" aria-label="主要導覽">
+    <ul class="shell">
+      <li><a href="about.html">ABOUT</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="news.html">NEWS</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="shop.html">SHOP</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="subscription.html">SUBSCRIPTION</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="course.html">COURSE</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="article.html">ARTICLE</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="qa.html">Q&amp;A</a></li>
+      <li class="nav-sep" aria-hidden="true"></li>
+      <li><a href="contacts.html">CONTACTS</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- 頁首為 fixed，此處佔位以維持內容原本的起始位置 -->
+<div class="header-spacer" aria-hidden="true"></div>
+
+<main id="main">
+
+  <!-- ============ 首屏 ============ -->
+  <section class="hero" id="top">
+    <div class="hero__stage">
+     <div class="hero__inner">
+
+      <!-- 裝飾：細框線（左右對稱貼齊版心） -->
+      <span class="rule rule--v"></span>
+      <span class="rule rule--v2"></span>
+      <span class="rule rule--mid"></span>
+
+      <!-- 裝飾：星形格紋（Figma 匯出） -->
+      <div class="lattice lattice--lg" data-deco aria-hidden="true">
+        <svg class="deco-lattice__svg" viewBox="0 0 312 143" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+        <g class="deco-lattice__grid">
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:250ms" d="M -26 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:420ms" d="M 26 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:590ms" d="M 78 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:760ms" d="M 130 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:930ms" d="M 182 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1100ms" d="M 234 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1270ms" d="M 286 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:435ms" d="M 0 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:605ms" d="M 52 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:775ms" d="M 104 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:945ms" d="M 156 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1115ms" d="M 208 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1285ms" d="M 260 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:450ms" d="M -26 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:620ms" d="M 26 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:790ms" d="M 78 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:960ms" d="M 130 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1130ms" d="M 182 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1300ms" d="M 234 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1470ms" d="M 286 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:635ms" d="M 0 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:805ms" d="M 52 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:975ms" d="M 104 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1145ms" d="M 156 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1315ms" d="M 208 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1485ms" d="M 260 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:650ms" d="M -26 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:820ms" d="M 26 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:990ms" d="M 78 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1160ms" d="M 130 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1330ms" d="M 182 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1500ms" d="M 234 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1670ms" d="M 286 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:835ms" d="M 0 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1005ms" d="M 52 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1175ms" d="M 104 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1345ms" d="M 156 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1515ms" d="M 208 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1685ms" d="M 260 130 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:850ms" d="M -26 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1020ms" d="M 26 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1190ms" d="M 78 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1360ms" d="M 130 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1530ms" d="M 182 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1700ms" d="M 234 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1870ms" d="M 286 156 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        </g>
+      </svg>
+      </div>
+      <div class="lattice lattice--sm" data-deco aria-hidden="true">
+        <svg class="deco-lattice__svg" viewBox="0 0 312 104" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+        <g class="deco-lattice__grid">
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:250ms" d="M -26 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:420ms" d="M 26 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:590ms" d="M 78 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:760ms" d="M 130 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:930ms" d="M 182 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1100ms" d="M 234 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1270ms" d="M 286 0 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:435ms" d="M 0 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:605ms" d="M 52 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:775ms" d="M 104 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:945ms" d="M 156 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1115ms" d="M 208 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1285ms" d="M 260 26 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:450ms" d="M -26 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:620ms" d="M 26 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:790ms" d="M 78 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:960ms" d="M 130 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1130ms" d="M 182 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1300ms" d="M 234 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1470ms" d="M 286 52 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:635ms" d="M 0 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:805ms" d="M 52 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:975ms" d="M 104 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1145ms" d="M 156 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1315ms" d="M 208 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1485ms" d="M 260 78 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:650ms" d="M -26 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:820ms" d="M 26 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:990ms" d="M 78 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1160ms" d="M 130 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1330ms" d="M 182 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1500ms" d="M 234 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        <path class="deco-star" pathLength="1" vector-effect="non-scaling-stroke" style="--d:1670ms" d="M 286 104 a 26 26 0 1 0 52 0 a 26 26 0 1 0 -52 0 Z"/>
+        </g>
+      </svg>
+      </div>
+
+      <h1 class="hero__title">
+        <span>NATURE</span>
+        <span>BREAD</span>
+      </h1>
+
+      <figure class="hero__shape" data-parallax="6">
+        <span class="hero__media"><img src="assets/img/hero-shape.png" alt="剛出爐的瑪芬與可頌擺放在烤盤上" width="577" height="796" fetchpriority="high"></span>
+      </figure>
+
+      <figure class="hero__wheat" data-parallax="-10">
+        <span class="hero__media"><img src="assets/img/hero-wheat.png" alt="陽光下飽滿的小麥穗" width="672" height="466" loading="lazy"></span>
+      </figure>
+
+      <div class="hero__copy">
+        <p class="hero__lead">以時間、季節與老麵，釀成日常餐桌的每一條麵包。</p>
+        <p>我們相信，好麵包來自最單純的事：一把當季的麥、一缸活著的老麵，以及願意等待的時間。從磨粉、揉製、發酵到出爐，每一道工序都在店內完成，不加乳化劑，也不使用人工香料。小麥本身的甜與香氣，需要足夠長的靜置才會浮現，我們願意為此把時間拉長，讓每一條麵包從第一口到最後一口，都帶著當季應有的味道。</p>
+        <p class="hero__sign">清晨五點，烤箱門一開。</p>
+      </div>
+
+      <svg class="star star--hero" viewBox="0 0 100 100" aria-hidden="true"><use href="#star8"/></svg>
+     </div>
+    </div>
+
+    <div class="shell">
+      <p class="hero__lede">
+        有機的西點麵包不只講究風味，也照顧身體。我們以低糖、低油、天然酵母為原則，
+        讓每一口都吃得「安心」、「乾淨」、「營養」，在日常裡慢慢養成身心平衡的好狀態。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 品牌故事 ============ -->
+  <section class="about" id="about">
+    <div class="shell about__grid">
+      <figure class="about__media reveal">
+        <img src="assets/img/about-main.jpg" alt="撒上糖粉的手工西點整齊排列" width="1400" height="820" loading="lazy">
+      </figure>
+
+      <div class="about__copy reveal" data-reveal-delay="120">
+        <p>Gothel's Garden 起於一間只有六坪的小店。</p>
+        <p>我們從一鍋老麵開始，記錄每一天的溫度與濕度，讓發酵成為與季節對話的方式。夏天縮短一小時，冬天多等一個晚上——麵團會自己說出它準備好了沒有。</p>
+        <p>十二年過去，配方換過無數次，唯一沒變的是：把麵包當成一份要送給家人的禮物。</p>
+        <a class="link-curve" href="about.html">About</a>
+      </div>
+    </div>
+
+    <div class="about__stars reveal" aria-hidden="true">
+      <svg class="star" viewBox="0 0 100 100"><use href="#star8"/></svg>
+      <svg class="star" viewBox="0 0 100 100"><use href="#star8"/></svg>
+      <svg class="star" viewBox="0 0 100 100"><use href="#star8"/></svg>
+    </div>
+  </section>
+
+  <div class="divider reveal reveal--line" aria-hidden="true">
+    <svg class="star star--divider" viewBox="0 0 100 100"><use href="#star8"/></svg>
+  </div>
+
+  <!-- ============ 訂閱方案 ============ -->
+  <section class="section" id="subscription">
+    <div class="shell">
+      <div class="section__head reveal">
+        <h2 class="section__title">SUBSCRIPTION <svg class="star star--inline" viewBox="0 0 100 100" aria-hidden="true"><use href="#star4"/></svg></h2>
+        <a class="link-curve link-curve--sm" href="subscription.html">See more</a>
+      </div>
+
+      <ul class="card-grid" id="subscriptionGrid"></ul>
+    </div>
+  </section>
+
+  <!-- ============ 商品 ============ -->
+  <section class="section" id="shop">
+    <div class="shell">
+      <div class="section__head reveal">
+        <h2 class="section__title">SHOP <svg class="star star--inline" viewBox="0 0 100 100" aria-hidden="true"><use href="#star4"/></svg></h2>
+        <a class="link-curve link-curve--sm" href="shop.html">See more</a>
+      </div>
+
+      <ul class="card-grid" id="shopGrid"></ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ 頁尾 ============ -->
+<footer class="site-footer" id="contacts">
+  <div class="divider divider--footer reveal reveal--line" aria-hidden="true">
+    <svg class="star star--divider" viewBox="0 0 100 100"><use href="#star8"/></svg>
+  </div>
+
+  <div class="shell footer__grid reveal">
+    <div class="footer__brand">
+      <p class="brand brand--footer"><span>Gothel's</span><span>Garden</span></p>
+      <div class="socials">
+        <a href="#" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.6 8.4h2V5.6h-2c-2 0-3.3 1.3-3.3 3.3v1.5H9.4v2.8h1.9V21h2.8v-7.8h2l.4-2.8h-2.4V9.2c0-.5.2-.8.5-.8z"/></svg>
+        </a>
+        <a href="#" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.1" cy="6.9" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <nav class="footer__col" aria-labelledby="f-shop">
+      <h3 id="f-shop">SHOP</h3>
+      <ul>
+        <li><a href="shop.html">麵包種類</a></li>
+        <li><a href="shop.html">西點種類</a></li>
+        <li><a href="shop.html">咖啡與飲品</a></li>
+        <li><a href="shop.html">節慶禮盒</a></li>
+        <li><a href="shop.html">季節限定</a></li>
+      </ul>
+    </nav>
+
+    <nav class="footer__col" aria-labelledby="f-sub">
+      <h3 id="f-sub">SUBSCRIPTION</h3>
+      <ul>
+        <li><a href="subscription.html">每週麵包箱</a></li>
+        <li><a href="subscription.html">經典可頌計畫</a></li>
+        <li><a href="subscription.html">週末早午餐組</a></li>
+        <li><a href="subscription.html">單品咖啡訂閱</a></li>
+        <li><a href="subscription.html">企業定期配送</a></li>
+        <li><a href="subscription.html">送禮訂閱</a></li>
+      </ul>
+    </nav>
+
+    <nav class="footer__col" aria-labelledby="f-course">
+      <h3 id="f-course">COURSE</h3>
+      <ul>
+        <li><a href="course.html">家庭烘焙入門</a></li>
+        <li><a href="course.html">法式可頌專班</a></li>
+        <li><a href="course.html">天然酵母養成</a></li>
+      </ul>
+    </nav>
+
+    <div class="footer__news">
+      <h3>訂閱電子報</h3>
+      <form class="news-form" id="newsForm" novalidate>
+        <label class="sr-only" for="newsEmail">電子信箱</label>
+        <input type="email" id="newsEmail" name="email" placeholder="輸入信箱" autocomplete="email" required>
+        <button type="submit" class="btn-line">訂閱</button>
+      </form>
+      <p class="news-msg" id="newsMsg" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div class="footer__bottom">
+    <ul class="shell">
+      <li><a href="#">Legal Notice</a></li>
+      <li><a href="#">Privacy Policy</a></li>
+      <li><a href="#">Cookies</a></li>
+      <li><a href="#">Credits</a></li>
+      <li><a href="#">Copyright</a></li>
+    </ul>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/deco.js"></script>
+</body>
+</html>

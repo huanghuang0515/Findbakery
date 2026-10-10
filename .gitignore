@@ -1,0 +1,13 @@
+# 作業系統／編輯器暫存
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+
+# 本機驗證與截圖暫存（開發過程產生，皆以底線開頭）
+_*/
+_*.html
+_*.png
+_*.txt
+_*.jpg
