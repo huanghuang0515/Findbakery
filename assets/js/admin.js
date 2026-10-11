@@ -37,7 +37,15 @@
     { key: 'products',  label: '商品管理' },
     { key: 'orders',    label: '訂單管理' },
     { key: 'members',   label: '會員管理' },
-    { key: 'marketing', label: '數據行銷' }
+    { key: 'marketing', label: '數據行銷' },
+    { key: 'shipping',  label: '運費管理' },
+    { key: 'points',    label: '點數管理' },
+    { key: 'coupons',   label: '優惠券管理' },
+    { key: 'media',     label: '媒體庫' },
+    { key: 'admins',    label: '管理員帳號' },
+    { key: 'payment',   label: '金流串接' },
+    { key: 'einvoice',  label: '電子發票' },
+    { key: 'changelog', label: '版本紀錄' }
   ];
   $('#adminNav').innerHTML = NAV.map(function (n) {
     return '<button class="admin-nav__item" type="button" data-nav="' + n.key + '">' + n.label + '</button>';
@@ -287,6 +295,318 @@
   }
 
   /* ====================================================
+     模組：運費管理
+     ==================================================== */
+  function viewShipping() {
+    var c = A.shippingConfig();
+    var zones = (c.zones || []).map(function (z) {
+      return '<tr><td>' + esc(z.name) + '</td><td class="ord__total">' + money(z.fee) + '</td></tr>';
+    }).join('');
+    return '<section class="admin-panel"><h2 class="admin-panel__h">基本運費設定</h2>' +
+      '<p class="admin-hint" style="margin:0 0 18px">此設定會<strong>即時連動前台</strong>購物車與結帳的運費計算。</p>' +
+      '<form class="admin-form" id="shipForm"><div class="form-grid">' +
+        '<div class="field"><label for="shipFree">滿額免運門檻（元）</label><input id="shipFree" type="number" min="0" value="' + c.freeThreshold + '"></div>' +
+        '<div class="field"><label for="shipFlat">一般運費（元）</label><input id="shipFlat" type="number" min="0" value="' + c.flatRate + '"></div>' +
+        '<div class="field field--full"><label>門市自取</label><button class="admin-toggle' + (c.pickup ? '' : ' is-off') + '" type="button" id="shipPickup">' + (c.pickup ? '開放自取（免運）' : '關閉自取') + '</button></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--primary" type="submit">儲存設定</button></div></form></section>' +
+      '<section class="admin-panel"><h2 class="admin-panel__h">配送區域費率（參考）</h2>' +
+        '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>區域</th><th>運費</th></tr></thead><tbody>' + zones + '</tbody></table></div>' +
+        '<p class="panel__note">前台結帳目前以「基本運費設定」計算；區域費率為展示用途。</p></section>';
+  }
+  function bindShipping() {
+    var state = { pickup: A.shippingConfig().pickup };
+    var pickup = $('#shipPickup');
+    pickup.addEventListener('click', function () {
+      state.pickup = !state.pickup;
+      pickup.classList.toggle('is-off', !state.pickup);
+      pickup.textContent = state.pickup ? '開放自取（免運）' : '關閉自取';
+    });
+    $('#shipForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      A.saveShipping({ freeThreshold: Math.max(0, parseInt($('#shipFree').value, 10) || 0),
+        flatRate: Math.max(0, parseInt($('#shipFlat').value, 10) || 0), pickup: state.pickup });
+      toast('運費設定已儲存，前台即時生效');
+    });
+  }
+
+  /* ====================================================
+     模組：點數管理
+     ==================================================== */
+  function viewPoints() {
+    var c = A.pointsConfig();
+    var rows = A.memberPoints().map(function (m) {
+      return '<tr data-email="' + esc(m.email) + '">' +
+        '<td class="admin-td-name">' + esc(m.name) + '</td>' +
+        '<td><span class="admin-badge admin-badge--' + m.type + '">' + m.type + ' 端</span></td>' +
+        '<td>' + esc(m.email) + '</td>' +
+        '<td class="ord__total">' + m.points + ' 點</td>' +
+        '<td><button class="btn btn--line btn--xs" type="button" data-add>＋100</button> ' +
+            '<button class="btn btn--line btn--xs" type="button" data-sub>－100</button></td></tr>';
+    }).join('');
+    return '<section class="admin-panel"><h2 class="admin-panel__h">點數規則</h2>' +
+      '<form class="admin-form" id="ptForm"><div class="form-grid">' +
+        '<div class="field"><label for="ptEarnPer">每消費金額（元）</label><input id="ptEarnPer" type="number" min="1" value="' + c.earnPer + '"></div>' +
+        '<div class="field"><label for="ptEarnPts">可得點數</label><input id="ptEarnPts" type="number" min="0" value="' + c.earnPoints + '"></div>' +
+        '<div class="field"><label for="ptRedeem">1 點折抵金額（元）</label><input id="ptRedeem" type="number" min="0" value="' + c.redeemRate + '"></div>' +
+        '<div class="field"><label for="ptBonus">註冊贈點</label><input id="ptBonus" type="number" min="0" value="' + c.signupBonus + '"></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--primary" type="submit">儲存規則</button></div></form>' +
+      '<p class="panel__note panel__note--tag">會員點數 = 累積消費 ÷ 每消費金額 × 可得點數 ＋ 手動調整。</p></section>' +
+      '<section class="admin-panel"><h2 class="admin-panel__h">會員點數</h2>' +
+        '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>姓名</th><th>端別</th><th>Email</th><th>點數</th><th>調整</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+  }
+  function bindPoints() {
+    $('#ptForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      A.savePoints({ earnPer: Math.max(1, parseInt($('#ptEarnPer').value, 10) || 1),
+        earnPoints: Math.max(0, parseInt($('#ptEarnPts').value, 10) || 0),
+        redeemRate: Math.max(0, parseInt($('#ptRedeem').value, 10) || 0),
+        signupBonus: Math.max(0, parseInt($('#ptBonus').value, 10) || 0) });
+      render('points'); toast('點數規則已儲存');
+    });
+    content.querySelectorAll('tbody tr').forEach(function (tr) {
+      var email = tr.dataset.email;
+      tr.querySelector('[data-add]').addEventListener('click', function () { A.adjustPoints(email, 100); render('points'); toast('已加 100 點'); });
+      tr.querySelector('[data-sub]').addEventListener('click', function () { A.adjustPoints(email, -100); render('points'); toast('已扣 100 點'); });
+    });
+  }
+
+  /* ====================================================
+     模組：優惠券管理
+     ==================================================== */
+  function viewCoupons() {
+    var rows = A.coupons().map(function (c) {
+      var val = c.type === 'percent' ? (c.value + '% 折扣') : ('折 ' + money(c.value));
+      return '<tr data-id="' + c.id + '">' +
+        '<td class="admin-td-name"><code class="admin-code">' + esc(c.code) + '</code></td>' +
+        '<td>' + val + '</td>' +
+        '<td>' + (c.minSpend ? '滿 ' + money(c.minSpend) : '無門檻') + '</td>' +
+        '<td>' + esc(c.expiry) + '</td>' +
+        '<td>' + c.used + ' 次</td>' +
+        '<td><button class="admin-toggle' + (c.active ? '' : ' is-off') + '" type="button" data-toggle>' + (c.active ? '啟用中' : '已停用') + '</button></td>' +
+        '<td><button class="admin-del" type="button" data-del>刪除</button></td></tr>';
+    }).join('');
+    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.coupons().length + ' 張優惠券。</p>' +
+        '<button class="btn btn--primary" type="button" id="addCouponBtn">＋ 新增優惠券</button></div>' +
+      '<section class="admin-panel admin-panel--form" id="couponForm" hidden><h2 class="admin-panel__h">新增優惠券</h2>' +
+      '<form class="admin-form" id="cpForm"><div class="form-grid">' +
+        '<div class="field"><label for="cpCode">代碼</label><input id="cpCode" placeholder="如 WELCOME100" required></div>' +
+        '<div class="field"><label for="cpType">類型</label><select id="cpType"><option value="fixed">固定金額</option><option value="percent">百分比</option></select></div>' +
+        '<div class="field"><label for="cpVal">折扣值</label><input id="cpVal" type="number" min="0" value="100"></div>' +
+        '<div class="field"><label for="cpMin">最低消費</label><input id="cpMin" type="number" min="0" value="0"></div>' +
+        '<div class="field"><label for="cpExp">到期日</label><input id="cpExp" placeholder="2026.12.31" value="2026.12.31"></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="cpCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
+      '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>代碼</th><th>優惠</th><th>門檻</th><th>到期</th><th>已使用</th><th>狀態</th><th>操作</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  function bindCoupons() {
+    var form = $('#couponForm');
+    $('#addCouponBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#cpCode').focus(); });
+    $('#cpCancel').addEventListener('click', function () { form.hidden = true; });
+    $('#cpForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var code = $('#cpCode').value.trim();
+      if (!code) { $('#cpCode').focus(); return; }
+      A.addCoupon({ code: code, type: $('#cpType').value, value: $('#cpVal').value, minSpend: $('#cpMin').value, expiry: $('#cpExp').value.trim() });
+      render('coupons'); toast('已新增優惠券：' + code.toUpperCase());
+    });
+    content.querySelectorAll('tbody tr').forEach(function (tr) {
+      var id = tr.dataset.id;
+      tr.querySelector('[data-toggle]').addEventListener('click', function () { A.toggleCoupon(id); render('coupons'); });
+      tr.querySelector('[data-del]').addEventListener('click', function () { if (window.confirm('確定刪除此優惠券？')) { A.removeCoupon(id); render('coupons'); toast('已刪除'); } });
+    });
+  }
+
+  /* ====================================================
+     模組：媒體庫
+     ==================================================== */
+  function viewMedia() {
+    var cards = A.media().map(function (m) {
+      return '<figure class="media-card" data-id="' + m.id + '">' +
+        '<div class="media-card__img"><img src="' + esc(m.src) + '" alt="' + esc(m.name) + '" loading="lazy"></div>' +
+        '<figcaption class="media-card__cap"><span class="media-card__name">' + esc(m.name) + '</span>' +
+          '<span class="media-card__meta">' + esc(m.uploadedAt) + (m.seed ? ' · 內建' : '') + '</span></figcaption>' +
+        '<div class="media-card__act"><button class="btn btn--line btn--xs" type="button" data-copy>複製路徑</button>' +
+          (m.seed ? '' : '<button class="admin-del" type="button" data-del>刪除</button>') + '</div></figure>';
+    }).join('');
+    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.media().length + ' 個檔案。上傳僅存於本機瀏覽器（demo，請小於 1.5MB）。</p>' +
+        '<label class="btn btn--primary media-upload">＋ 上傳圖片<input type="file" id="mediaUpload" accept="image/*" hidden></label></div>' +
+      '<div class="media-grid">' + cards + '</div>';
+  }
+  function bindMedia() {
+    var up = $('#mediaUpload');
+    up.addEventListener('change', function () {
+      var f = up.files && up.files[0];
+      if (!f) return;
+      if (f.size > 1500000) { toast('檔案過大（請小於 1.5MB）'); up.value = ''; return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        var r = A.addMedia({ name: f.name, src: reader.result });
+        if (r && !r.ok) { toast(r.error); return; }
+        render('media'); toast('已上傳：' + f.name);
+      };
+      reader.readAsDataURL(f);
+    });
+    content.querySelectorAll('.media-card').forEach(function (fig) {
+      var id = fig.dataset.id;
+      var src = fig.querySelector('img').getAttribute('src');
+      fig.querySelector('[data-copy]').addEventListener('click', function () {
+        try { navigator.clipboard.writeText(src); } catch (e) {}
+        toast('已複製路徑');
+      });
+      var del = fig.querySelector('[data-del]');
+      if (del) del.addEventListener('click', function () { if (window.confirm('確定刪除此檔案？')) { A.removeMedia(id); render('media'); toast('已刪除'); } });
+    });
+  }
+
+  /* ====================================================
+     模組：管理員帳號
+     ==================================================== */
+  function viewAdmins() {
+    var me = admin.email;
+    var rows = A.adminAccounts().map(function (a) {
+      var isMe = a.email === me;
+      return '<tr data-email="' + esc(a.email) + '">' +
+        '<td class="admin-td-name">' + esc(a.name) + (isMe ? '<span class="admin-td-sub">目前登入</span>' : '') + '</td>' +
+        '<td>' + esc(a.email) + '</td>' +
+        '<td>' + esc(a.role) + '</td>' +
+        '<td><button class="admin-toggle' + (a.active === false ? ' is-off' : '') + '" type="button" data-toggle' + (isMe ? ' disabled' : '') + '>' + (a.active === false ? '已停用' : '啟用中') + '</button></td>' +
+        '<td>' + (isMe ? '—' : '<button class="admin-del" type="button" data-del>刪除</button>') + '</td></tr>';
+    }).join('');
+    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.adminAccounts().length + ' 個管理員帳號。</p>' +
+        '<button class="btn btn--primary" type="button" id="addAdminBtn">＋ 新增管理員</button></div>' +
+      '<section class="admin-panel admin-panel--form" id="adminFormPanel" hidden><h2 class="admin-panel__h">新增管理員</h2>' +
+      '<form class="admin-form" id="adForm"><div class="form-grid">' +
+        '<div class="field"><label for="adName">姓名</label><input id="adName" required></div>' +
+        '<div class="field"><label for="adEmail">Email</label><input id="adEmail" type="email" required></div>' +
+        '<div class="field"><label for="adPw">密碼</label><input id="adPw" value="123456"></div>' +
+        '<div class="field"><label for="adRole">身分</label><select id="adRole"><option>店長</option><option>管理員</option><option>客服</option><option>倉管</option></select></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="adCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
+      '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>姓名</th><th>Email</th><th>身分</th><th>狀態</th><th>操作</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  function bindAdmins() {
+    var form = $('#adminFormPanel');
+    $('#addAdminBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#adName').focus(); });
+    $('#adCancel').addEventListener('click', function () { form.hidden = true; });
+    $('#adForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var r = A.addAdmin({ name: $('#adName').value.trim(), email: $('#adEmail').value.trim(), pw: $('#adPw').value, role: $('#adRole').value });
+      if (!r.ok) { toast(r.error); return; }
+      render('admins'); toast('已新增管理員');
+    });
+    content.querySelectorAll('tbody tr').forEach(function (tr) {
+      var email = tr.dataset.email;
+      var tg = tr.querySelector('[data-toggle]');
+      if (tg && !tg.disabled) tg.addEventListener('click', function () {
+        var a = A.adminAccounts().filter(function (x) { return x.email === email; })[0];
+        A.updateAdmin(email, { active: !(a && a.active !== false) }); render('admins');
+      });
+      var del = tr.querySelector('[data-del]');
+      if (del) del.addEventListener('click', function () {
+        if (window.confirm('確定刪除帳號 ' + email + '？')) { var r = A.removeAdmin(email); if (!r.ok) { toast(r.error); return; } render('admins'); toast('已刪除'); }
+      });
+    });
+  }
+
+  /* ====================================================
+     模組：金流串接（設定 demo）
+     ==================================================== */
+  function viewPayment() {
+    var c = A.paymentConfig();
+    function opt(v, label, cur) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>'; }
+    function chk(id, label, on) { return '<label class="admin-check"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + '> ' + label + '</label>'; }
+    return '<section class="admin-panel"><div class="admin-toolbar"><h2 class="admin-panel__h" style="margin:0">金流設定</h2>' +
+        '<button class="admin-toggle' + (c.enabled ? '' : ' is-off') + '" type="button" id="payEnabled">' + (c.enabled ? '已啟用' : '未啟用') + '</button></div>' +
+      '<p class="admin-hint" style="margin:0 0 18px">純前端 demo，僅儲存設定於本機，不會對接真實金流商（需後端）。</p>' +
+      '<form class="admin-form" id="payForm"><div class="form-grid">' +
+        '<div class="field"><label for="payProvider">金流商</label><select id="payProvider">' +
+          opt('ecpay', '綠界 ECPay', c.provider) + opt('newebpay', '藍新 NewebPay', c.provider) + opt('linepay', 'LINE Pay', c.provider) + opt('stripe', 'Stripe', c.provider) + '</select></div>' +
+        '<div class="field"><label for="payEnv">環境</label><select id="payEnv">' + opt('test', '測試', c.env) + opt('prod', '正式', c.env) + '</select></div>' +
+        '<div class="field"><label for="payMid">商店代號 / Merchant ID</label><input id="payMid" value="' + esc(c.merchantId) + '" placeholder="2000132"></div>' +
+        '<div class="field"><label for="payKey">HashKey / API Key</label><input id="payKey" type="password" value="' + esc(c.hashKey) + '" placeholder="••••••••"></div>' +
+        '<div class="field field--full"><label>啟用付款方式</label><div class="admin-checks">' +
+          chk('payCredit', '信用卡', c.methods.credit) + chk('payAtm', 'ATM 轉帳', c.methods.atm) + chk('payCvs', '超商代碼', c.methods.cvs) + chk('payLine', 'LINE Pay', c.methods.linepay) + '</div></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--primary" type="submit">儲存設定</button><button class="btn btn--line" type="button" id="payTest">測試連線</button></div></form></section>';
+  }
+  function bindPayment() {
+    var state = { enabled: A.paymentConfig().enabled };
+    var en = $('#payEnabled');
+    en.addEventListener('click', function () { state.enabled = !state.enabled; en.classList.toggle('is-off', !state.enabled); en.textContent = state.enabled ? '已啟用' : '未啟用'; });
+    $('#payTest').addEventListener('click', function () { toast('測試連線成功（模擬）'); });
+    $('#payForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      A.savePayment({ enabled: state.enabled, provider: $('#payProvider').value, env: $('#payEnv').value,
+        merchantId: $('#payMid').value.trim(), hashKey: $('#payKey').value,
+        methods: { credit: $('#payCredit').checked, atm: $('#payAtm').checked, cvs: $('#payCvs').checked, linepay: $('#payLine').checked } });
+      toast('金流設定已儲存');
+    });
+  }
+
+  /* ====================================================
+     模組：電子發票（設定 demo）
+     ==================================================== */
+  function viewInvoice() {
+    var c = A.invoiceConfig();
+    function opt(v, label, cur) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>'; }
+    return '<section class="admin-panel"><div class="admin-toolbar"><h2 class="admin-panel__h" style="margin:0">電子發票設定</h2>' +
+        '<button class="admin-toggle' + (c.enabled ? '' : ' is-off') + '" type="button" id="invEnabled">' + (c.enabled ? '已啟用' : '未啟用') + '</button></div>' +
+      '<p class="admin-hint" style="margin:0 0 18px">純前端 demo，僅儲存設定；實際開立需串接加值中心（綠界／ezPay 等）與後端。</p>' +
+      '<form class="admin-form" id="invForm"><div class="form-grid">' +
+        '<div class="field"><label for="invProvider">發票服務商</label><select id="invProvider">' + opt('ecpay', '綠界 ECPay', c.provider) + opt('ezpay', 'ezPay 簡單付', c.provider) + opt('neweb', '藍新', c.provider) + '</select></div>' +
+        '<div class="field"><label for="invTax">賣方統一編號</label><input id="invTax" value="' + esc(c.sellerTaxId) + '" placeholder="12345678"></div>' +
+        '<div class="field"><label for="invType">預設發票類型</label><select id="invType">' + opt('B2C', 'B2C 個人', c.defaultType) + opt('B2B', 'B2B 公司', c.defaultType) + '</select></div>' +
+        '<div class="field"><label for="invCarrier">預設載具</label><select id="invCarrier">' + opt('mobile', '手機條碼', c.carrier) + opt('npc', '自然人憑證', c.carrier) + opt('member', '會員載具', c.carrier) + opt('donation', '捐贈', c.carrier) + '</select></div>' +
+        '<div class="field"><label for="invDonation">捐贈碼（選填）</label><input id="invDonation" value="' + esc(c.donationCode) + '" placeholder="如 919"></div>' +
+        '<div class="field field--full"><label>自動開立</label><button class="admin-toggle' + (c.autoIssue ? '' : ' is-off') + '" type="button" id="invAuto">' + (c.autoIssue ? '訂單完成後自動開立' : '手動開立') + '</button></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--primary" type="submit">儲存設定</button></div></form></section>';
+  }
+  function bindInvoice() {
+    var cfg = A.invoiceConfig();
+    var state = { enabled: cfg.enabled, auto: cfg.autoIssue };
+    var en = $('#invEnabled');
+    en.addEventListener('click', function () { state.enabled = !state.enabled; en.classList.toggle('is-off', !state.enabled); en.textContent = state.enabled ? '已啟用' : '未啟用'; });
+    var au = $('#invAuto');
+    au.addEventListener('click', function () { state.auto = !state.auto; au.classList.toggle('is-off', !state.auto); au.textContent = state.auto ? '訂單完成後自動開立' : '手動開立'; });
+    $('#invForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      A.saveInvoice({ enabled: state.enabled, provider: $('#invProvider').value, sellerTaxId: $('#invTax').value.trim(),
+        defaultType: $('#invType').value, carrier: $('#invCarrier').value, donationCode: $('#invDonation').value.trim(), autoIssue: state.auto });
+      toast('電子發票設定已儲存');
+    });
+  }
+
+  /* ====================================================
+     模組：版本紀錄
+     ==================================================== */
+  function viewChangelog() {
+    var items = A.changelog().map(function (v) {
+      var lis = (v.items || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+      return '<li class="cl-item"><div class="cl-item__head"><span class="cl-ver">' + esc(v.version) + '</span>' +
+        '<span class="cl-date">' + esc(v.date) + '</span><span class="cl-author">' + esc(v.author) + '</span></div>' +
+        '<ul class="cl-list">' + lis + '</ul></li>';
+    }).join('');
+    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.changelog().length + ' 筆版本紀錄。</p>' +
+        '<button class="btn btn--primary" type="button" id="addLogBtn">＋ 新增版本</button></div>' +
+      '<section class="admin-panel admin-panel--form" id="logFormPanel" hidden><h2 class="admin-panel__h">新增版本紀錄</h2>' +
+      '<form class="admin-form" id="clForm"><div class="form-grid">' +
+        '<div class="field"><label for="clVer">版本號</label><input id="clVer" placeholder="v1.3.1" required></div>' +
+        '<div class="field"><label for="clAuthor">作者</label><input id="clAuthor" value="' + esc(admin.name) + '"></div>' +
+        '<div class="field field--full"><label for="clItems">更新內容（每行一項）</label><textarea id="clItems" rows="3" placeholder="例：修正頁尾分隔線"></textarea></div>' +
+      '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="clCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
+      '<ol class="cl-timeline">' + items + '</ol>';
+  }
+  function bindChangelog() {
+    var form = $('#logFormPanel');
+    $('#addLogBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#clVer').focus(); });
+    $('#clCancel').addEventListener('click', function () { form.hidden = true; });
+    $('#clForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ver = $('#clVer').value.trim();
+      if (!ver) { $('#clVer').focus(); return; }
+      A.addChangelog({ version: ver, author: $('#clAuthor').value.trim() || admin.name, items: $('#clItems').value.split('\n') });
+      render('changelog'); toast('已新增版本 ' + ver);
+    });
+  }
+
+  /* ====================================================
      路由
      ==================================================== */
   var VIEWS = {
@@ -294,7 +614,15 @@
     products:  { title: '商品管理', render: viewProducts,  bind: bindProducts },
     orders:    { title: '訂單管理', render: viewOrders,    bind: bindOrders },
     members:   { title: '會員管理', render: function () { return viewMembers('all'); }, bind: bindMembers },
-    marketing: { title: '數據行銷', render: viewMarketing, bind: bindMarketing }
+    marketing: { title: '數據行銷', render: viewMarketing, bind: bindMarketing },
+    shipping:  { title: '運費管理', render: viewShipping,  bind: bindShipping },
+    points:    { title: '點數管理', render: viewPoints,    bind: bindPoints },
+    coupons:   { title: '優惠券管理', render: viewCoupons, bind: bindCoupons },
+    media:     { title: '媒體庫',   render: viewMedia,     bind: bindMedia },
+    admins:    { title: '管理員帳號', render: viewAdmins,  bind: bindAdmins },
+    payment:   { title: '金流串接', render: viewPayment,   bind: bindPayment },
+    einvoice:  { title: '電子發票', render: viewInvoice,   bind: bindInvoice },
+    changelog: { title: '版本紀錄', render: viewChangelog, bind: bindChangelog }
   };
 
   function render(key) {

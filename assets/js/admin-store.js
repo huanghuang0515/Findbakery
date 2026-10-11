@@ -20,15 +20,49 @@ window.GGAdmin = (function () {
   function write(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
   function money(n) { return GG ? GG.money(n) : '$' + Number(n).toLocaleString('en-US'); }
 
-  /* ---- 管理員帳號（demo）---- */
-  var ADMINS = {
-    'admin@gg.com': { pw: 'admin123', name: 'Amy 陳', role: '店長' }
-  };
+  /* ---- 管理員帳號（demo，可於後台「管理員帳號」維護）---- */
+  var K_ADMINS = 'gg.admin.accounts';
+  function seedAdmins() {
+    return [{ email: 'admin@gg.com', pw: 'admin123', name: 'Amy 陳', role: '店長', active: true }];
+  }
+  function adminAccounts() {
+    var list = read(K_ADMINS, null);
+    if (!list || !list.length) { list = seedAdmins(); write(K_ADMINS, list); }
+    return list;
+  }
+  function findAdmin(email) {
+    email = String(email || '').trim().toLowerCase();
+    var list = adminAccounts();
+    for (var i = 0; i < list.length; i++) if (list[i].email === email) return list[i];
+    return null;
+  }
+  function addAdmin(obj) {
+    var email = String(obj.email || '').trim().toLowerCase();
+    if (!email) return { ok: false, error: '請輸入 Email' };
+    if (findAdmin(email)) return { ok: false, error: '此 Email 已存在' };
+    var list = adminAccounts();
+    list.push({ email: email, pw: obj.pw || '123456', name: obj.name || '新管理員', role: obj.role || '管理員', active: true });
+    write(K_ADMINS, list);
+    return { ok: true };
+  }
+  function updateAdmin(email, patch) {
+    var a = findAdmin(email);
+    if (!a) return;
+    for (var k in patch) if (patch.hasOwnProperty(k)) a[k] = patch[k];
+    write(K_ADMINS, adminAccounts());
+  }
+  function removeAdmin(email) {
+    var list = adminAccounts().filter(function (a) { return a.email !== String(email || '').toLowerCase(); });
+    if (!list.length) return { ok: false, error: '至少需保留一個管理員帳號' };
+    write(K_ADMINS, list);
+    return { ok: true };
+  }
 
   function login(email, pw) {
     email = String(email || '').trim().toLowerCase();
-    var a = ADMINS[email];
+    var a = findAdmin(email);
     if (!a) return { ok: false, error: '查無此管理員帳號' };
+    if (a.active === false) return { ok: false, error: '此帳號已停用' };
     if (a.pw !== pw) return { ok: false, error: '密碼錯誤' };
     write(K_SESSION, { email: email });
     return { ok: true };
@@ -36,9 +70,10 @@ window.GGAdmin = (function () {
   function logout() { try { localStorage.removeItem(K_SESSION); } catch (e) {} }
   function current() {
     var s = read(K_SESSION, null);
-    if (!s || !s.email || !ADMINS[s.email]) return null;
-    var a = ADMINS[s.email];
-    return { email: s.email, name: a.name, role: a.role };
+    if (!s || !s.email) return null;
+    var a = findAdmin(s.email);
+    if (!a || a.active === false) return null;
+    return { email: a.email, name: a.name, role: a.role };
   }
   function isLoggedIn() { return !!current(); }
   function demoAdmin() { return { email: 'admin@gg.com', pw: 'admin123' }; }
@@ -216,20 +251,220 @@ window.GGAdmin = (function () {
     return '﻿' + lines.join('\r\n');   /* BOM 讓 Excel 正確辨識中文 */
   }
 
+  /* ======================================================
+     運費管理（連動前台 store.js 的 shipping）
+     ====================================================== */
+  var K_SHIP = 'gg.admin.shipping';
+  function seedShipping() {
+    return { freeThreshold: 800, flatRate: 120, pickup: true,
+      zones: [
+        { id: 'main', name: '台灣本島', fee: 120 },
+        { id: 'offshore', name: '離島（澎湖／金門／馬祖）', fee: 250 }
+      ] };
+  }
+  function shippingConfig() {
+    var c = read(K_SHIP, null);
+    if (!c) { c = seedShipping(); write(K_SHIP, c); }
+    return c;
+  }
+  function saveShipping(patch) {
+    var c = shippingConfig();
+    for (var k in patch) if (patch.hasOwnProperty(k)) c[k] = patch[k];
+    write(K_SHIP, c);
+    try { window.dispatchEvent(new CustomEvent('gg:adminchange', { detail: { what: 'shipping' } })); } catch (e) {}
+  }
+
+  /* ======================================================
+     點數管理（紅利點數 demo）
+     每消費 earnPer 元得 earnPoints 點；redeemRate：1 點可折抵金額
+     ====================================================== */
+  var K_POINTS = 'gg.admin.points';
+  function seedPoints() {
+    return { enabled: true, earnPer: 100, earnPoints: 1, redeemRate: 1, signupBonus: 100, ledger: {} };
+  }
+  function pointsConfig() {
+    var c = read(K_POINTS, null);
+    if (!c) { c = seedPoints(); write(K_POINTS, c); }
+    if (!c.ledger) c.ledger = {};
+    return c;
+  }
+  function savePoints(patch) {
+    var c = pointsConfig();
+    for (var k in patch) if (patch.hasOwnProperty(k)) c[k] = patch[k];
+    write(K_POINTS, c);
+  }
+  function memberPoints() {
+    var c = pointsConfig();
+    var per = c.earnPer || 100;
+    return members().map(function (m) {
+      var earned = Math.floor((m.spendTotal / per) * (c.earnPoints || 0));
+      var adj = c.ledger[m.email] || 0;
+      return { name: m.name, type: m.type, email: m.email, points: earned + adj, earned: earned, adj: adj };
+    });
+  }
+  function adjustPoints(email, delta) {
+    var c = pointsConfig();
+    c.ledger[email] = (c.ledger[email] || 0) + delta;
+    write(K_POINTS, c);
+  }
+
+  /* ======================================================
+     媒體庫（圖片素材 demo；上傳僅存於本機）
+     ====================================================== */
+  var K_MEDIA = 'gg.admin.media';
+  function seedMedia() {
+    var imgs = [
+      { id: 'p-01', name: '可頌.jpg' }, { id: 'p-03', name: '原味貝果.jpg' },
+      { id: 'p-04', name: '酸種麵包.jpg' }, { id: 'p-05', name: '奶油甜點.jpg' },
+      { id: 'p-06', name: '黑芝麻餐包.jpg' }, { id: 'p-07', name: '生吐司.jpg' },
+      { id: 'p-08', name: '甜甜圈.jpg' }, { id: 'p-09', name: '厚片吐司.jpg' },
+      { id: 'p-10', name: '雜糧麵包.jpg' }, { id: 'about-main', name: '品牌故事.jpg' }
+    ];
+    return imgs.map(function (x) {
+      return { id: x.id, name: x.name, src: 'assets/img/' + x.id + '.jpg', seed: true, uploadedAt: '2026.09.01' };
+    });
+  }
+  function media() {
+    var list = read(K_MEDIA, null);
+    if (!list) { list = seedMedia(); write(K_MEDIA, list); }
+    return list;
+  }
+  function addMedia(obj) {
+    var list = media();
+    list.unshift({ id: 'm-' + (Date.now() % 1000000), name: obj.name || '未命名.png',
+      src: obj.src, seed: false, uploadedAt: new Date().toISOString().slice(0, 10).replace(/-/g, '.') });
+    try { write(K_MEDIA, list); return { ok: true }; }
+    catch (e) { return { ok: false, error: '儲存空間不足（demo 上限）' }; }
+  }
+  function removeMedia(id) {
+    write(K_MEDIA, media().filter(function (m) { return m.id !== id; }));
+  }
+
+  /* ======================================================
+     優惠券管理
+     ====================================================== */
+  var K_COUPON = 'gg.admin.coupons';
+  function seedCoupons() {
+    return [
+      { id: 'c1', code: 'WELCOME100', type: 'fixed', value: 100, minSpend: 500, expiry: '2026.12.31', active: true, used: 32 },
+      { id: 'c2', code: 'SUMMER15', type: 'percent', value: 15, minSpend: 800, expiry: '2026.09.30', active: false, used: 118 },
+      { id: 'c3', code: 'VIPFREESHIP', type: 'fixed', value: 120, minSpend: 0, expiry: '2026.12.31', active: true, used: 7 }
+    ];
+  }
+  function coupons() {
+    var list = read(K_COUPON, null);
+    if (!list) { list = seedCoupons(); write(K_COUPON, list); }
+    return list;
+  }
+  function addCoupon(obj) {
+    var list = coupons();
+    list.unshift({ id: 'c-' + (Date.now() % 1000000), code: String(obj.code || 'NEWCODE').toUpperCase(),
+      type: obj.type || 'fixed', value: parseInt(obj.value, 10) || 0, minSpend: parseInt(obj.minSpend, 10) || 0,
+      expiry: obj.expiry || '2026.12.31', active: true, used: 0 });
+    write(K_COUPON, list);
+  }
+  function updateCoupon(id, patch) {
+    var list = coupons();
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) { for (var k in patch) if (patch.hasOwnProperty(k)) list[i][k] = patch[k]; break; }
+    write(K_COUPON, list);
+  }
+  function toggleCoupon(id) {
+    var list = coupons();
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) { list[i].active = !list[i].active; break; }
+    write(K_COUPON, list);
+  }
+  function removeCoupon(id) {
+    write(K_COUPON, coupons().filter(function (c) { return c.id !== id; }));
+  }
+
+  /* ======================================================
+     金流串接（設定 demo，無真實串接）
+     ====================================================== */
+  var K_PAY = 'gg.admin.payment';
+  function seedPayment() {
+    return { enabled: false, provider: 'ecpay', env: 'test', merchantId: '', hashKey: '',
+      methods: { credit: true, atm: true, cvs: false, linepay: false } };
+  }
+  function paymentConfig() {
+    var c = read(K_PAY, null);
+    if (!c) { c = seedPayment(); write(K_PAY, c); }
+    if (!c.methods) c.methods = { credit: true };
+    return c;
+  }
+  function savePayment(patch) {
+    var c = paymentConfig();
+    for (var k in patch) if (patch.hasOwnProperty(k)) c[k] = patch[k];
+    write(K_PAY, c);
+  }
+
+  /* ======================================================
+     電子發票（設定 demo，無真實串接）
+     ====================================================== */
+  var K_INV = 'gg.admin.einvoice';
+  function seedInvoice() {
+    return { enabled: false, provider: 'ecpay', sellerTaxId: '', autoIssue: true,
+      defaultType: 'B2C', carrier: 'mobile', donationCode: '' };
+  }
+  function invoiceConfig() {
+    var c = read(K_INV, null);
+    if (!c) { c = seedInvoice(); write(K_INV, c); }
+    return c;
+  }
+  function saveInvoice(patch) {
+    var c = invoiceConfig();
+    for (var k in patch) if (patch.hasOwnProperty(k)) c[k] = patch[k];
+    write(K_INV, c);
+  }
+
+  /* ======================================================
+     版本紀錄
+     ====================================================== */
+  var K_LOG = 'gg.admin.changelog';
+  function seedChangelog() {
+    return [
+      { version: 'v1.3.0', date: '2026.10.11', author: 'Amy 陳', items: ['新增後台模組：運費、點數、媒體庫、優惠券、管理員帳號、金流串接、電子發票、版本紀錄'] },
+      { version: 'v1.2.0', date: '2026.09.20', author: 'Amy 陳', items: ['後台商品改價／下架即時連動前台', '新增數據行銷與 CSV 匯出'] },
+      { version: 'v1.1.0', date: '2026.09.08', author: 'Amy 陳', items: ['完成會員中心（C／B 端）與購物結帳流程'] },
+      { version: 'v1.0.0', date: '2026.08.30', author: 'Amy 陳', items: ['Gothel\'s Garden 品牌官網上線'] }
+    ];
+  }
+  function changelog() {
+    var list = read(K_LOG, null);
+    if (!list) { list = seedChangelog(); write(K_LOG, list); }
+    return list;
+  }
+  function addChangelog(obj) {
+    var list = changelog();
+    list.unshift({ version: obj.version || 'v1.0.0',
+      date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      author: obj.author || '管理員',
+      items: (obj.items || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; }) });
+    write(K_LOG, list);
+  }
+
   /* 開發用：清空後台資料回到示範狀態 */
   function resetDemo() {
-    [K_PROD, K_ORD, K_MEM].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+    [K_PROD, K_ORD, K_MEM, K_ADMINS, K_SHIP, K_POINTS, K_MEDIA, K_COUPON, K_PAY, K_INV, K_LOG]
+      .forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
   }
 
   return {
     STATUSES: STATUSES,
     login: login, logout: logout, current: current, isLoggedIn: isLoggedIn, demoAdmin: demoAdmin,
+    adminAccounts: adminAccounts, addAdmin: addAdmin, updateAdmin: updateAdmin, removeAdmin: removeAdmin,
     products: products, findProduct: findProduct, updateProduct: updateProduct,
     toggleActive: toggleActive, addProduct: addProduct, removeProduct: removeProduct,
     orders: orders, setOrderStatus: setOrderStatus,
     members: members,
     revenue: revenue, orderCount: orderCount, memberStats: memberStats,
     topProducts: topProducts, marketingList: marketingList, exportCsv: exportCsv,
+    shippingConfig: shippingConfig, saveShipping: saveShipping,
+    pointsConfig: pointsConfig, savePoints: savePoints, memberPoints: memberPoints, adjustPoints: adjustPoints,
+    media: media, addMedia: addMedia, removeMedia: removeMedia,
+    coupons: coupons, addCoupon: addCoupon, updateCoupon: updateCoupon, toggleCoupon: toggleCoupon, removeCoupon: removeCoupon,
+    paymentConfig: paymentConfig, savePayment: savePayment,
+    invoiceConfig: invoiceConfig, saveInvoice: saveInvoice,
+    changelog: changelog, addChangelog: addChangelog,
     money: money, resetDemo: resetDemo
   };
 })();

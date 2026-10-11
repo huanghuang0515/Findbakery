@@ -147,7 +147,16 @@ window.GG = (function () {
   }
   function shipping() {
     var s = subtotal();
-    return (s === 0 || s >= FREE_SHIP) ? 0 : SHIP_FEE;
+    if (s === 0) return 0;
+    /* 後台「運費管理」若有設定（gg.admin.shipping）則優先採用，否則用內建值 */
+    var free = FREE_SHIP, fee = SHIP_FEE;
+    try {
+      var r = localStorage.getItem('gg.admin.shipping');
+      if (r) { var c = JSON.parse(r);
+        if (c && c.freeThreshold != null) free = c.freeThreshold;
+        if (c && c.flatRate != null) fee = c.flatRate; }
+    } catch (e) {}
+    return s >= free ? 0 : fee;
   }
   function total() { return subtotal() + shipping(); }
 
