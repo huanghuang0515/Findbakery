@@ -84,7 +84,7 @@ window.GGAdmin = (function () {
   function seedProducts() {
     var base = (GG && GG.baseCatalog) ? GG.baseCatalog() : [];
     var stockMap = { 'sub-01': 40, 'sub-02': 25, 'sub-03': 18, 'p-03': 120, 'p-06': 90,
-                     'p-07': 60, 'p-08': 45, 'p-09': 50, 'p-10': 30 };
+                     'p-07': 60, 'p-08': 8, 'p-09': 50, 'p-10': 6 };
     return base.map(function (p) {
       var o = {};
       for (var k in p) if (p.hasOwnProperty(k)) o[k] = p[k];
@@ -347,7 +347,7 @@ window.GGAdmin = (function () {
   function seedCoupons() {
     return [
       { id: 'c1', code: 'WELCOME100', type: 'fixed', value: 100, minSpend: 500, expiry: '2026.12.31', active: true, used: 32 },
-      { id: 'c2', code: 'SUMMER15', type: 'percent', value: 15, minSpend: 800, expiry: '2026.09.30', active: false, used: 118 },
+      { id: 'c2', code: 'SUMMER15', type: 'percent', value: 15, cap: 200, minSpend: 800, expiry: '2026.09.30', active: false, used: 118 },
       { id: 'c3', code: 'VIPFREESHIP', type: 'fixed', value: 120, minSpend: 0, expiry: '2026.12.31', active: true, used: 7 }
     ];
   }
@@ -359,8 +359,8 @@ window.GGAdmin = (function () {
   function addCoupon(obj) {
     var list = coupons();
     list.unshift({ id: 'c-' + (Date.now() % 1000000), code: String(obj.code || 'NEWCODE').toUpperCase(),
-      type: obj.type || 'fixed', value: parseInt(obj.value, 10) || 0, minSpend: parseInt(obj.minSpend, 10) || 0,
-      expiry: obj.expiry || '2026.12.31', active: true, used: 0 });
+      type: obj.type || 'fixed', value: parseInt(obj.value, 10) || 0, cap: parseInt(obj.cap, 10) || 0,
+      minSpend: parseInt(obj.minSpend, 10) || 0, expiry: obj.expiry || '2026.12.31', active: true, used: 0 });
     write(K_COUPON, list);
   }
   function updateCoupon(id, patch) {
@@ -442,9 +442,37 @@ window.GGAdmin = (function () {
     write(K_LOG, list);
   }
 
+  /* ======================================================
+     通知（由目前資料即時衍生：低庫存、待處理訂單）
+     ====================================================== */
+  var K_NOTIF_READ = 'gg.admin.notifsRead';
+  function notifications() {
+    var list = [];
+    products().forEach(function (p) {
+      if (p.active !== false && typeof p.stock === 'number' && p.stock <= 10) {
+        list.push({ id: 'stock:' + p.id, type: 'stock',
+          text: '「' + p.name + '」庫存僅剩 ' + p.stock + ' 件', sub: '商品管理', nav: 'products' });
+      }
+    });
+    orders().forEach(function (o) {
+      if (o.status === '處理中') {
+        list.push({ id: 'order:' + o.no, type: 'order',
+          text: '訂單 ' + o.no + ' 待處理', sub: o.customer + '｜' + money(o.total), nav: 'orders' });
+      }
+    });
+    return list;
+  }
+  function notifReadIds() { var r = read(K_NOTIF_READ, null); return Array.isArray(r) ? r : []; }
+  function markNotifRead(id) { var r = notifReadIds(); if (r.indexOf(id) === -1) { r.push(id); write(K_NOTIF_READ, r); } }
+  function markAllNotifRead() { write(K_NOTIF_READ, notifications().map(function (n) { return n.id; })); }
+  function unreadNotifCount() {
+    var reads = notifReadIds();
+    return notifications().filter(function (n) { return reads.indexOf(n.id) === -1; }).length;
+  }
+
   /* 開發用：清空後台資料回到示範狀態 */
   function resetDemo() {
-    [K_PROD, K_ORD, K_MEM, K_ADMINS, K_SHIP, K_POINTS, K_MEDIA, K_COUPON, K_PAY, K_INV, K_LOG]
+    [K_PROD, K_ORD, K_MEM, K_ADMINS, K_SHIP, K_POINTS, K_MEDIA, K_COUPON, K_PAY, K_INV, K_LOG, K_NOTIF_READ]
       .forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
   }
 
@@ -465,6 +493,8 @@ window.GGAdmin = (function () {
     paymentConfig: paymentConfig, savePayment: savePayment,
     invoiceConfig: invoiceConfig, saveInvoice: saveInvoice,
     changelog: changelog, addChangelog: addChangelog,
+    notifications: notifications, notifReadIds: notifReadIds, markNotifRead: markNotifRead,
+    markAllNotifRead: markAllNotifRead, unreadNotifCount: unreadNotifCount,
     money: money, resetDemo: resetDemo
   };
 })();

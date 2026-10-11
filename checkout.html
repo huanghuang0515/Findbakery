@@ -133,6 +133,17 @@
             <p class="coupon__msg" id="couponMsg" role="status" aria-live="polite"></p>
           </div>
           <div class="summary__row summary__row--discount" id="discountRow" hidden><span id="discountLabel">折扣</span><span id="sumDiscount">-$0</span></div>
+          <div class="points-redeem" id="pointsRedeem" hidden>
+            <div class="points-redeem__head"><span>點數折抵</span><span class="points-redeem__bal" id="ptBalance"></span></div>
+            <div class="coupon__field">
+              <input type="number" id="ptInput" min="0" step="1" placeholder="折抵點數" aria-label="折抵點數" autocomplete="off">
+              <button type="button" class="btn-line" id="ptApply" data-mode="apply">折抵</button>
+            </div>
+            <button type="button" class="points-redeem__max" id="ptMax">全部折抵</button>
+            <p class="coupon__msg" id="ptMsg" role="status" aria-live="polite"></p>
+          </div>
+          <p class="points-redeem__login" id="ptLogin" hidden>登入會員即可用點數折抵　<a href="login.html">前往登入 →</a></p>
+          <div class="summary__row summary__row--discount" id="pointsRow" hidden><span id="pointsLabel">點數折抵</span><span id="sumPoints">-$0</span></div>
           <dl class="summary__total"><dt>應付總計</dt><dd id="sumTotal">$0</dd></dl>
           <p class="summary__points" id="earnPoints" hidden></p>
           <button class="btn btn--primary btn--full" type="submit" id="placeBtn">確認下單</button>
@@ -183,6 +194,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="assets/js/store.js"></script>
+<script src="assets/js/auth.js"></script>
 <script src="assets/js/site.js"></script>
 <script src="assets/js/checkout.js"></script>
 </body>

@@ -15,10 +15,19 @@
     return;
   }
 
-  /* 訂單已成立 → 清空購物車與已套用折扣碼（頁首件數同步歸零） */
+  /* 訂單已成立 → 清空購物車、折扣碼與點數折抵（頁首件數同步歸零） */
   GG.clearCart();
   if (GG.clearCoupon) GG.clearCoupon();
+  if (GG.clearPointsRedeem) GG.clearPointsRedeem();
   if (GG.mountBadge) GG.mountBadge();
+
+  /* 點數回饋與折抵反映到會員點數帳（demo）；以 pointsSettled 防止重整重複計算 */
+  if (order.memberEmail && GG.adjustLedger && !order.pointsSettled) {
+    var net = (order.earnedPoints || 0) - (order.pointsUsed || 0);
+    if (net) GG.adjustLedger(order.memberEmail, net);
+    order.pointsSettled = true;
+    GG.saveOrder(order);
+  }
 
   /* ---- 填入內容 ---- */
   $('#orderNo').textContent = order.no;
@@ -46,6 +55,12 @@
       $('#discountLabel').textContent = '折扣' + (order.coupon ? '（' + order.coupon + '）' : '');
       $('#sumDiscount').textContent = '-' + GG.money(order.discount);
     }
+  }
+  var pRow = $('#pointsRow');
+  if (pRow && order.pointsDiscount && order.pointsDiscount > 0) {
+    pRow.hidden = false;
+    $('#pointsLabel').textContent = '點數折抵（' + (order.pointsUsed || 0) + ' 點）';
+    $('#sumPoints').textContent = '-' + GG.money(order.pointsDiscount);
   }
   $('#sumTotal').textContent = GG.money(order.total);
   var epEl = $('#earnPoints');

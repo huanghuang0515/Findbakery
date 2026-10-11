@@ -11,6 +11,19 @@
   /* 購物車為空 → 導回購物車頁 */
   if (!GG.lines().length) { location.replace('cart.html'); return; }
 
+  /* 登入會員（供點數折抵用）；未登入則 member 為 null */
+  var member = (window.GGAuth && GGAuth.current && GGAuth.current()) || null;
+  function pointsState() {
+    if (!member || !GG.pointsBalance) return null;
+    return GG.pointsBalance(member.spendTotal, member.email);  /* { balance, rate } 或 null */
+  }
+  function maxRedeem() {
+    var ps = pointsState();
+    if (!ps || !ps.rate) return 0;
+    var remaining = Math.max(0, GG.subtotal() - GG.discount());
+    return Math.min(ps.balance, Math.floor(remaining / ps.rate));
+  }
+
   /* ---- 訂單摘要 ---- */
   function renderSummary() {
     $('#miniLines').innerHTML = GG.lines().map(function (l) {
@@ -33,6 +46,15 @@
         $('#sumDiscount').textContent = dl.value;
       } else { dRow.hidden = true; }
     }
+    var pRow = $('#pointsRow');
+    if (pRow) {
+      var pd = GG.pointsDiscount ? GG.pointsDiscount() : 0;
+      if (pd > 0) {
+        pRow.hidden = false;
+        $('#pointsLabel').textContent = '點數折抵（' + (GG.pointsUsed ? GG.pointsUsed() : 0) + ' 點）';
+        $('#sumPoints').textContent = '-' + GG.money(pd);
+      } else { pRow.hidden = true; }
+    }
     $('#sumTotal').textContent = GG.money(GG.total());
     var epEl = $('#earnPoints');
     if (epEl) {
@@ -41,6 +63,53 @@
       else { epEl.hidden = true; }
     }
     renderCouponState();
+    renderPointsBox();
+  }
+
+  /* 點數折抵：顯示/狀態 */
+  function renderPointsBox() {
+    var box = $('#pointsRedeem'), loginHint = $('#ptLogin');
+    if (!box) return;
+    var ps = pointsState();
+    /* 功能關閉：兩者皆隱藏 */
+    if (!GG.pointsRedeemRate || !GG.pointsRedeemRate()) { box.hidden = true; if (loginHint) loginHint.hidden = true; return; }
+    if (!ps || ps.balance <= 0) {
+      box.hidden = true;
+      if (loginHint) loginHint.hidden = member ? true : false;   /* 未登入才提示登入 */
+      return;
+    }
+    if (loginHint) loginHint.hidden = true;
+    box.hidden = false;
+    var used = GG.getPointsRedeem ? GG.getPointsRedeem() : 0;
+    var apply = $('#ptApply'), input = $('#ptInput'), bal = $('#ptBalance'), msg = $('#ptMsg');
+    bal.textContent = '可用 ' + ps.balance + ' 點（1 點折 ' + GG.money(ps.rate) + '）';
+    if (used > 0) {
+      input.value = used; input.disabled = true;
+      apply.textContent = '移除'; apply.dataset.mode = 'remove';
+      $('#ptMax').hidden = true;
+      if (!msg.classList.contains('is-err')) { msg.textContent = '已折抵 ' + (GG.pointsUsed ? GG.pointsUsed() : used) + ' 點'; msg.className = 'coupon__msg is-ok'; }
+    } else {
+      input.disabled = false;
+      apply.textContent = '折抵'; apply.dataset.mode = 'apply';
+      $('#ptMax').hidden = false;
+      input.setAttribute('max', String(maxRedeem()));
+      if (!msg.classList.contains('is-err')) { msg.textContent = ''; msg.className = 'coupon__msg'; }
+    }
+  }
+  function bindPointsRedeem() {
+    var apply = $('#ptApply'), input = $('#ptInput'), msg = $('#ptMsg'), maxBtn = $('#ptMax');
+    if (!apply) return;
+    apply.addEventListener('click', function () {
+      if (apply.dataset.mode === 'remove') { GG.setPointsRedeem(0); msg.textContent = ''; msg.className = 'coupon__msg'; renderSummary(); return; }
+      var n = parseInt(input.value, 10) || 0;
+      var max = maxRedeem();
+      if (n <= 0) { input.focus(); return; }
+      if (n > max) { n = max; }
+      if (max <= 0) { msg.textContent = '目前無可折抵點數'; msg.className = 'coupon__msg is-err'; return; }
+      GG.setPointsRedeem(n); renderSummary();
+    });
+    maxBtn.addEventListener('click', function () { var max = maxRedeem(); if (max > 0) { GG.setPointsRedeem(max); renderSummary(); } });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply.click(); } });
   }
 
   /* 折扣碼：反映目前套用狀態 */
@@ -73,6 +142,7 @@
   }
   renderSummary();
   bindCoupon();
+  bindPointsRedeem();
 
   /* ---- 配送方式：門市自取時隱藏地址欄並免除必填 ---- */
   var addrField = $('#addrField'), addrInput = $('#address');
@@ -155,7 +225,10 @@
       coupon: (GG.appliedCoupon && GG.appliedCoupon() ? GG.appliedCoupon().code : null),
       couponType: (GG.appliedCoupon && GG.appliedCoupon() ? GG.appliedCoupon().type : null),
       shippingWaived: GG.shippingWaived ? GG.shippingWaived() : 0,
+      pointsDiscount: GG.pointsDiscount ? GG.pointsDiscount() : 0,
+      pointsUsed: GG.pointsUsed ? GG.pointsUsed() : 0,
       earnedPoints: GG.pointsForAmount ? GG.pointsForAmount() : null,
+      memberEmail: (member ? member.email : null),
       total: GG.total()
     };
     GG.saveOrder(order);

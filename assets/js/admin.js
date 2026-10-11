@@ -27,10 +27,10 @@
   }
   var img = function (name) { return 'assets/img/' + name + '.jpg'; };
 
-  /* ---- 側欄 ---- */
-  $('#adminUser').innerHTML =
-    '<span class="admin-user__name">' + esc(admin.name) + '</span>' +
-    '<span class="admin-user__role">' + esc(admin.role) + '</span>';
+  /* ---- Top bar：使用者 chip ---- */
+  $('#chipName').textContent = admin.name;
+  $('#chipRole').textContent = admin.role;
+  $('#chipAvatar').textContent = (admin.name || 'A').trim().charAt(0);
 
   var ICONS = {
     dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
@@ -408,7 +408,7 @@
      ==================================================== */
   function viewCoupons() {
     var rows = A.coupons().map(function (c) {
-      var val = c.type === 'percent' ? (c.value + '% 折扣') : (c.type === 'freeship' ? '免運' : '折 ' + money(c.value));
+      var val = c.type === 'percent' ? (c.value + '% 折扣' + (c.cap ? '（上限 ' + money(c.cap) + '）' : '')) : (c.type === 'freeship' ? '免運' : '折 ' + money(c.value));
       return '<tr data-id="' + c.id + '">' +
         '<td class="admin-td-name"><code class="admin-code">' + esc(c.code) + '</code></td>' +
         '<td>' + val + '</td>' +
@@ -425,6 +425,7 @@
         '<div class="field"><label for="cpCode">代碼</label><input id="cpCode" placeholder="如 WELCOME100" required></div>' +
         '<div class="field"><label for="cpType">類型</label><select id="cpType"><option value="fixed">固定金額</option><option value="percent">百分比</option><option value="freeship">免運</option></select></div>' +
         '<div class="field"><label for="cpVal">折扣值<span class="field__hint" id="cpValHint"></span></label><input id="cpVal" type="number" min="0" value="100"></div>' +
+        '<div class="field" id="cpCapField"><label for="cpCap">折扣上限<span class="field__hint">（百分比用，0＝不限）</span></label><input id="cpCap" type="number" min="0" value="0"></div>' +
         '<div class="field"><label for="cpMin">最低消費</label><input id="cpMin" type="number" min="0" value="0"></div>' +
         '<div class="field"><label for="cpExp">到期日</label><input id="cpExp" placeholder="2026.12.31" value="2026.12.31"></div>' +
       '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="cpCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
@@ -434,19 +435,20 @@
     var form = $('#couponForm');
     $('#addCouponBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#cpCode').focus(); });
     $('#cpCancel').addEventListener('click', function () { form.hidden = true; });
-    var cpType = $('#cpType'), cpVal = $('#cpVal'), cpValHint = $('#cpValHint');
+    var cpType = $('#cpType'), cpVal = $('#cpVal'), cpValHint = $('#cpValHint'), cpCapField = $('#cpCapField');
     function syncCpType() {
-      var free = cpType.value === 'freeship';
+      var t = cpType.value, free = t === 'freeship';
       cpVal.disabled = free;
       if (free) { cpVal.value = 0; cpValHint.textContent = '（免運券免填）'; }
       else cpValHint.textContent = '';
+      if (cpCapField) cpCapField.style.display = (t === 'percent') ? '' : 'none';
     }
     cpType.addEventListener('change', syncCpType); syncCpType();
     $('#cpForm').addEventListener('submit', function (e) {
       e.preventDefault();
       var code = $('#cpCode').value.trim();
       if (!code) { $('#cpCode').focus(); return; }
-      A.addCoupon({ code: code, type: $('#cpType').value, value: $('#cpVal').value, minSpend: $('#cpMin').value, expiry: $('#cpExp').value.trim() });
+      A.addCoupon({ code: code, type: $('#cpType').value, value: $('#cpVal').value, cap: $('#cpCap').value, minSpend: $('#cpMin').value, expiry: $('#cpExp').value.trim() });
       render('coupons'); toast('已新增優惠券：' + code.toUpperCase());
     });
     content.querySelectorAll('tbody tr').forEach(function (tr) {
@@ -690,6 +692,65 @@
 
   /* 登出 */
   $('#logoutBtn').addEventListener('click', function () { A.logout(); location.href = 'admin-login.html'; });
+
+  /* ====================================================
+     Top bar：通知 + 使用者選單
+     ==================================================== */
+  var notifBtn = $('#notifBtn'), notifPanel = $('#notifPanel');
+  var chipBtn = $('#userChipBtn'), userDropdown = $('#userDropdown');
+
+  function renderNotifs() {
+    var items = A.notifications();
+    var reads = A.notifReadIds();
+    var unread = A.unreadNotifCount();
+    var badge = $('#notifBadge');
+    badge.textContent = unread > 9 ? '9+' : String(unread);
+    badge.hidden = unread === 0;
+    var list = $('#notifList');
+    if (!items.length) { list.innerHTML = '<li class="admin-notif__empty">目前沒有通知</li>'; return; }
+    list.innerHTML = items.map(function (n) {
+      var isRead = reads.indexOf(n.id) !== -1;
+      return '<li class="admin-notif__item' + (isRead ? ' is-read' : '') + '" data-id="' + esc(n.id) + '" data-nav="' + esc(n.nav || '') + '">' +
+        '<span class="admin-notif__dot admin-notif__dot--' + esc(n.type) + '"></span>' +
+        '<span class="admin-notif__body">' +
+          '<span class="admin-notif__text">' + esc(n.text) + '</span>' +
+          '<span class="admin-notif__sub">' + esc(n.sub) + '</span>' +
+        '</span></li>';
+    }).join('');
+    list.querySelectorAll('.admin-notif__item').forEach(function (li) {
+      li.addEventListener('click', function () {
+        A.markNotifRead(li.dataset.id);
+        var nav = li.dataset.nav;
+        closeTop();
+        if (nav && VIEWS[nav]) render(nav); else renderNotifs();
+      });
+    });
+  }
+
+  function closeTop() {
+    notifPanel.hidden = true; notifBtn.setAttribute('aria-expanded', 'false');
+    userDropdown.hidden = true; chipBtn.setAttribute('aria-expanded', 'false');
+  }
+  notifBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var willOpen = notifPanel.hidden;
+    closeTop();
+    if (willOpen) { renderNotifs(); notifPanel.hidden = false; notifBtn.setAttribute('aria-expanded', 'true'); }
+  });
+  chipBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var willOpen = userDropdown.hidden;
+    closeTop();
+    if (willOpen) { userDropdown.hidden = false; chipBtn.setAttribute('aria-expanded', 'true'); }
+  });
+  $('#notifReadAll').addEventListener('click', function (e) { e.stopPropagation(); A.markAllNotifRead(); renderNotifs(); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#adminNotif') && !e.target.closest('#adminUserMenu')) closeTop();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTop(); });
+  /* 資料變更（改庫存／訂單狀態）時即時更新通知數 */
+  window.addEventListener('gg:adminchange', renderNotifs);
+  renderNotifs();
 
   /* 起始 */
   var start = location.hash.slice(1);

@@ -189,6 +189,7 @@ window.GG = (function () {
     if (!c || c.type === 'freeship') return 0;   /* 免運券的優惠反映在運費，非商品折扣 */
     if (sub == null) sub = subtotal();
     var d = c.type === 'percent' ? Math.round(sub * (c.value || 0) / 100) : (c.value || 0);
+    if (c.type === 'percent' && c.cap) d = Math.min(d, c.cap);   /* 百分比折扣上限 */
     return Math.max(0, Math.min(d, sub));
   }
   /* 驗證折扣碼是否可用於目前購物車；回 { ok, coupon, discount } 或 { ok:false, msg } */
@@ -241,17 +242,69 @@ window.GG = (function () {
     return { show: false };
   }
 
-  /* 點數試算：依後台「點數管理」gg.admin.points；關閉或無設定回 null。
-     amount 預設為折扣後商品金額（不含運費）。 */
-  function pointsForAmount(amount) {
+  /* ---- 點數折抵（需登入會員；餘額由呼叫端以 pointsBalance 取得）---- */
+  var POINTS_REDEEM_KEY = 'gg.pointsRedeem';   /* { points } */
+  function pointsCfg() {
     var r = read('gg.admin.points', null);
-    if (!r || r.enabled === false) return null;
-    if (amount == null) amount = Math.max(0, subtotal() - discount());
-    var per = r.earnPer || 100, pts = r.earnPoints || 0;
+    return (r && r.enabled !== false) ? r : null;
+  }
+  function pointsRedeemRate() { var c = pointsCfg(); return c ? (c.redeemRate || 0) : 0; }
+  /* 會員目前可用點數（spendTotal 與 email 由呼叫端提供，例如 GGAuth.current）*/
+  function pointsBalance(spendTotal, email) {
+    var c = pointsCfg(); if (!c) return null;
+    var per = c.earnPer || 100, pts = c.earnPoints || 0;
+    var earned = Math.floor(((spendTotal || 0) / per) * pts);
+    var adj = (c.ledger && c.ledger[email]) || 0;
+    return { balance: Math.max(0, earned + adj), rate: c.redeemRate || 0, per: per, pts: pts };
+  }
+  function getPointsRedeem() {
+    var r = read(POINTS_REDEEM_KEY, null);
+    return (r && r.points > 0) ? Math.floor(r.points) : 0;
+  }
+  function setPointsRedeem(points) {
+    points = Math.max(0, parseInt(points, 10) || 0);
+    if (points > 0) write(POINTS_REDEEM_KEY, { points: points });
+    else { try { localStorage.removeItem(POINTS_REDEEM_KEY); } catch (e) {} }
+    try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+  }
+  function clearPointsRedeem() {
+    try { localStorage.removeItem(POINTS_REDEEM_KEY); } catch (e) {}
+  }
+  /* 點數折抵金額：受可折抵點數與「折扣後商品餘額」雙重上限 */
+  function pointsDiscount() {
+    var rate = pointsRedeemRate();
+    if (!rate) return 0;
+    var n = getPointsRedeem();
+    if (n <= 0) return 0;
+    var remaining = Math.max(0, subtotal() - discount());
+    return Math.min(n * rate, remaining);
+  }
+  function pointsUsed() {
+    var rate = pointsRedeemRate();
+    if (!rate) return 0;
+    return Math.round(pointsDiscount() / rate);
+  }
+  /* 折扣後的商品淨額（不含運費）*/
+  function netGoods() { return Math.max(0, subtotal() - discount() - pointsDiscount()); }
+
+  /* 本次可獲得點數：依後台規則，以折扣後商品淨額計；關閉或無設定回 null */
+  function pointsForAmount(amount) {
+    var c = pointsCfg(); if (!c) return null;
+    if (amount == null) amount = netGoods();
+    var per = c.earnPer || 100, pts = c.earnPoints || 0;
     return Math.floor((amount / per) * pts);
   }
 
-  function total() { return Math.max(0, subtotal() - discount()) + shipping(); }
+  /* 直接調整後台點數帳 ledger（下單後回饋／扣抵用）*/
+  function adjustLedger(email, delta) {
+    if (!email || !delta) return;
+    var r = read('gg.admin.points', null); if (!r) return;
+    if (!r.ledger) r.ledger = {};
+    r.ledger[email] = (r.ledger[email] || 0) + delta;
+    write('gg.admin.points', r);
+  }
+
+  function total() { return netGoods() + shipping(); }
 
   /* 展開購物車為含商品明細的列表，供渲染用 */
   function lines() {
@@ -309,6 +362,9 @@ window.GG = (function () {
     discount: discount, appliedCoupon: appliedCoupon, checkCoupon: checkCoupon,
     applyCoupon: applyCoupon, clearCoupon: clearCoupon,
     shippingWaived: shippingWaived, discountLine: discountLine, pointsForAmount: pointsForAmount,
+    pointsBalance: pointsBalance, pointsRedeemRate: pointsRedeemRate,
+    getPointsRedeem: getPointsRedeem, setPointsRedeem: setPointsRedeem, clearPointsRedeem: clearPointsRedeem,
+    pointsDiscount: pointsDiscount, pointsUsed: pointsUsed, netGoods: netGoods, adjustLedger: adjustLedger,
     getFavs: getFavs,
     saveOrder: saveOrder, getOrder: getOrder,
     money: money, mountBadge: mountBadge,

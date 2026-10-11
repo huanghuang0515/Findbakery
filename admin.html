@@ -24,17 +24,42 @@
       <span class="admin-side__tag">後台管理系統</span>
     </a>
     <nav class="admin-nav" id="adminNav" aria-label="後台功能"></nav>
-    <div class="admin-side__foot">
-      <div class="admin-user" id="adminUser"></div>
-      <button class="btn btn--line btn--full" type="button" id="logoutBtn">登出</button>
-      <a class="admin-side__site" href="index.html">前往前台網站 →</a>
-    </div>
   </aside>
 
   <main class="admin-main">
     <header class="admin-top">
       <button class="admin-burger" id="adminBurger" aria-label="開啟選單">☰</button>
       <h1 class="admin-top__title" id="adminTitle">儀表板</h1>
+
+      <div class="admin-top__right">
+        <!-- 通知 -->
+        <div class="admin-notif" id="adminNotif">
+          <button class="admin-notif__btn" id="notifBtn" type="button" aria-label="通知" aria-expanded="false" aria-controls="notifPanel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+            <span class="admin-notif__badge" id="notifBadge" hidden>0</span>
+          </button>
+          <div class="admin-notif__panel" id="notifPanel" hidden role="dialog" aria-label="通知清單">
+            <div class="admin-notif__head"><span>通知</span><button class="admin-notif__readall" type="button" id="notifReadAll">全部已讀</button></div>
+            <ul class="admin-notif__list" id="notifList"></ul>
+          </div>
+        </div>
+
+        <!-- 使用者 -->
+        <div class="admin-usermenu" id="adminUserMenu">
+          <button class="admin-chip" id="userChipBtn" type="button" aria-expanded="false" aria-controls="userDropdown">
+            <span class="admin-chip__avatar" id="chipAvatar">A</span>
+            <span class="admin-chip__meta">
+              <span class="admin-chip__name" id="chipName"></span>
+              <span class="admin-chip__role" id="chipRole"></span>
+            </span>
+            <svg class="admin-chip__caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="admin-dropdown" id="userDropdown" hidden role="menu">
+            <a class="admin-dropdown__item" href="index.html" role="menuitem">前往前台網站 →</a>
+            <button class="admin-dropdown__item admin-dropdown__item--danger" type="button" id="logoutBtn" role="menuitem">登出</button>
+          </div>
+        </div>
+      </div>
     </header>
     <div class="admin-content" id="adminContent"></div>
   </main>
