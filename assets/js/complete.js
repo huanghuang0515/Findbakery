@@ -35,15 +35,24 @@
 
   $('#sumSubtotal').textContent = GG.money(order.subtotal);
   $('#sumShipping').textContent = order.shipping === 0 ? '免運' : GG.money(order.shipping);
-  if (order.discount && order.discount > 0) {
-    var dRow = $('#discountRow');
-    if (dRow) {
+  var dRow = $('#discountRow');
+  if (dRow) {
+    if (order.couponType === 'freeship') {
+      dRow.hidden = false;
+      $('#discountLabel').textContent = '免運優惠' + (order.coupon ? '（' + order.coupon + '）' : '');
+      $('#sumDiscount').textContent = (order.shippingWaived && order.shippingWaived > 0) ? '-' + GG.money(order.shippingWaived) : '已免運';
+    } else if (order.discount && order.discount > 0) {
       dRow.hidden = false;
       $('#discountLabel').textContent = '折扣' + (order.coupon ? '（' + order.coupon + '）' : '');
       $('#sumDiscount').textContent = '-' + GG.money(order.discount);
     }
   }
   $('#sumTotal').textContent = GG.money(order.total);
+  var epEl = $('#earnPoints');
+  if (epEl && order.earnedPoints && order.earnedPoints > 0) {
+    epEl.hidden = false;
+    epEl.textContent = '本次獲得 ' + order.earnedPoints + ' 點，已累積至您的會員帳戶';
+  }
 
   function esc(s) {
     return String(s || '').replace(/[&<>"]/g, function (c) {

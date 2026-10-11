@@ -42,11 +42,11 @@
     $('#sumShipping').textContent = ship === 0 ? '免運' : GG.money(ship);
     var dRow = $('#discountRow');
     if (dRow) {
-      var c = GG.appliedCoupon && GG.appliedCoupon();
-      if (c && disc > 0) {
+      var dl = GG.discountLine ? GG.discountLine() : { show: disc > 0 };
+      if (dl.show) {
         dRow.hidden = false;
-        $('#discountLabel').textContent = '折扣（' + c.code + '）';
-        $('#sumDiscount').textContent = '-' + GG.money(disc);
+        $('#discountLabel').textContent = dl.label;
+        $('#sumDiscount').textContent = dl.value;
       } else { dRow.hidden = true; }
     }
     $('#sumTotal').textContent = GG.money(GG.total());

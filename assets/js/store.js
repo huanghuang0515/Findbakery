@@ -145,10 +145,10 @@ window.GG = (function () {
       return sum + (p ? p.price * it.qty : 0);
     }, 0);
   }
-  function shipping() {
+  /* 原始運費（未計免運券）：後台「運費管理」gg.admin.shipping 若有設定則優先採用 */
+  function baseShipping() {
     var s = subtotal();
     if (s === 0) return 0;
-    /* 後台「運費管理」若有設定（gg.admin.shipping）則優先採用，否則用內建值 */
     var free = FREE_SHIP, fee = SHIP_FEE;
     try {
       var r = localStorage.getItem('gg.admin.shipping');
@@ -157,6 +157,14 @@ window.GG = (function () {
         if (c && c.flatRate != null) fee = c.flatRate; }
     } catch (e) {}
     return s >= free ? 0 : fee;
+  }
+  /* 實際運費：套用有效的「免運」優惠券時為 0 */
+  function shipping() {
+    return isFreeShipCoupon() ? 0 : baseShipping();
+  }
+  /* 免運券實際省下的運費（原本就免運則為 0）*/
+  function shippingWaived() {
+    return isFreeShipCoupon() ? baseShipping() : 0;
   }
   /* ---- 優惠券（連動後台「優惠券管理」gg.admin.coupons）---- */
   var COUPON_KEY = 'gg.coupon';   /* 目前套用的折扣碼 { code } */
@@ -178,7 +186,7 @@ window.GG = (function () {
     return new Date() > new Date(+mm[1], +mm[2] - 1, +mm[3], 23, 59, 59);
   }
   function couponDiscountOf(c, sub) {
-    if (!c) return 0;
+    if (!c || c.type === 'freeship') return 0;   /* 免運券的優惠反映在運費，非商品折扣 */
     if (sub == null) sub = subtotal();
     var d = c.type === 'percent' ? Math.round(sub * (c.value || 0) / 100) : (c.value || 0);
     return Math.max(0, Math.min(d, sub));
@@ -215,6 +223,32 @@ window.GG = (function () {
   function discount() {
     var c = appliedCoupon();
     return c ? couponDiscountOf(c, subtotal()) : 0;
+  }
+  function isFreeShipCoupon() {
+    var c = appliedCoupon();
+    return !!(c && c.type === 'freeship');
+  }
+  /* 摘要用的折扣／免運顯示行：{ show, label, value } */
+  function discountLine() {
+    var c = appliedCoupon();
+    if (!c) return { show: false };
+    if (c.type === 'freeship') {
+      var w = shippingWaived();
+      return { show: true, label: '免運優惠（' + c.code + '）', value: w > 0 ? '-' + money(w) : '已免運' };
+    }
+    var d = couponDiscountOf(c, subtotal());
+    if (d > 0) return { show: true, label: '折扣（' + c.code + '）', value: '-' + money(d) };
+    return { show: false };
+  }
+
+  /* 點數試算：依後台「點數管理」gg.admin.points；關閉或無設定回 null。
+     amount 預設為折扣後商品金額（不含運費）。 */
+  function pointsForAmount(amount) {
+    var r = read('gg.admin.points', null);
+    if (!r || r.enabled === false) return null;
+    if (amount == null) amount = Math.max(0, subtotal() - discount());
+    var per = r.earnPer || 100, pts = r.earnPoints || 0;
+    return Math.floor((amount / per) * pts);
   }
 
   function total() { return Math.max(0, subtotal() - discount()) + shipping(); }
@@ -274,6 +308,7 @@ window.GG = (function () {
     count: count, subtotal: subtotal, shipping: shipping, total: total, lines: lines,
     discount: discount, appliedCoupon: appliedCoupon, checkCoupon: checkCoupon,
     applyCoupon: applyCoupon, clearCoupon: clearCoupon,
+    shippingWaived: shippingWaived, discountLine: discountLine, pointsForAmount: pointsForAmount,
     getFavs: getFavs,
     saveOrder: saveOrder, getOrder: getOrder,
     money: money, mountBadge: mountBadge,

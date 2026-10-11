@@ -1323,6 +1323,10 @@ html.js .reveal--line.is-in .star--divider{ opacity:1; }
 .coupon__msg.is-err{ color:#b4443c; }
 .summary__row--discount span:last-child{ color:#4a6b46; }
 .summary__row--discount span:first-child{ color:#4a6b46; }
+.summary__points{ margin:14px 0 0; padding:10px 14px; background:var(--paper);
+  border:1px solid var(--line); font-size:var(--fs-sm); color:var(--ink-soft);
+  letter-spacing:.04em; text-align:center; }
+.field__hint{ font-size:var(--fs-xs); color:var(--muted); margin-left:6px; letter-spacing:0; }
 .summary__back{ display:block; text-align:center; margin-top:16px; font-size:var(--fs-sm); color:var(--muted); }
 .summary__back:hover{ color:var(--ink); }
 

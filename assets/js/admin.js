@@ -408,7 +408,7 @@
      ==================================================== */
   function viewCoupons() {
     var rows = A.coupons().map(function (c) {
-      var val = c.type === 'percent' ? (c.value + '% 折扣') : ('折 ' + money(c.value));
+      var val = c.type === 'percent' ? (c.value + '% 折扣') : (c.type === 'freeship' ? '免運' : '折 ' + money(c.value));
       return '<tr data-id="' + c.id + '">' +
         '<td class="admin-td-name"><code class="admin-code">' + esc(c.code) + '</code></td>' +
         '<td>' + val + '</td>' +
@@ -423,8 +423,8 @@
       '<section class="admin-panel admin-panel--form" id="couponForm" hidden><h2 class="admin-panel__h">新增優惠券</h2>' +
       '<form class="admin-form" id="cpForm"><div class="form-grid">' +
         '<div class="field"><label for="cpCode">代碼</label><input id="cpCode" placeholder="如 WELCOME100" required></div>' +
-        '<div class="field"><label for="cpType">類型</label><select id="cpType"><option value="fixed">固定金額</option><option value="percent">百分比</option></select></div>' +
-        '<div class="field"><label for="cpVal">折扣值</label><input id="cpVal" type="number" min="0" value="100"></div>' +
+        '<div class="field"><label for="cpType">類型</label><select id="cpType"><option value="fixed">固定金額</option><option value="percent">百分比</option><option value="freeship">免運</option></select></div>' +
+        '<div class="field"><label for="cpVal">折扣值<span class="field__hint" id="cpValHint"></span></label><input id="cpVal" type="number" min="0" value="100"></div>' +
         '<div class="field"><label for="cpMin">最低消費</label><input id="cpMin" type="number" min="0" value="0"></div>' +
         '<div class="field"><label for="cpExp">到期日</label><input id="cpExp" placeholder="2026.12.31" value="2026.12.31"></div>' +
       '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="cpCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
@@ -434,6 +434,14 @@
     var form = $('#couponForm');
     $('#addCouponBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#cpCode').focus(); });
     $('#cpCancel').addEventListener('click', function () { form.hidden = true; });
+    var cpType = $('#cpType'), cpVal = $('#cpVal'), cpValHint = $('#cpValHint');
+    function syncCpType() {
+      var free = cpType.value === 'freeship';
+      cpVal.disabled = free;
+      if (free) { cpVal.value = 0; cpValHint.textContent = '（免運券免填）'; }
+      else cpValHint.textContent = '';
+    }
+    cpType.addEventListener('change', syncCpType); syncCpType();
     $('#cpForm').addEventListener('submit', function (e) {
       e.preventDefault();
       var code = $('#cpCode').value.trim();

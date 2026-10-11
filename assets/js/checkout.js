@@ -24,17 +24,22 @@
     }).join('');
     $('#sumSubtotal').textContent = GG.money(GG.subtotal());
     $('#sumShipping').textContent = GG.shipping() === 0 ? '免運' : GG.money(GG.shipping());
-    var disc = GG.discount ? GG.discount() : 0;
     var dRow = $('#discountRow');
     if (dRow) {
-      var c = GG.appliedCoupon && GG.appliedCoupon();
-      if (c && disc > 0) {
+      var dl = GG.discountLine ? GG.discountLine() : { show: false };
+      if (dl.show) {
         dRow.hidden = false;
-        $('#discountLabel').textContent = '折扣（' + c.code + '）';
-        $('#sumDiscount').textContent = '-' + GG.money(disc);
+        $('#discountLabel').textContent = dl.label;
+        $('#sumDiscount').textContent = dl.value;
       } else { dRow.hidden = true; }
     }
     $('#sumTotal').textContent = GG.money(GG.total());
+    var epEl = $('#earnPoints');
+    if (epEl) {
+      var ep = GG.pointsForAmount ? GG.pointsForAmount() : null;
+      if (ep && ep > 0) { epEl.hidden = false; epEl.textContent = '本次可獲得 ' + ep + ' 點'; }
+      else { epEl.hidden = true; }
+    }
     renderCouponState();
   }
 
@@ -148,6 +153,9 @@
       shipping: GG.shipping(),
       discount: GG.discount ? GG.discount() : 0,
       coupon: (GG.appliedCoupon && GG.appliedCoupon() ? GG.appliedCoupon().code : null),
+      couponType: (GG.appliedCoupon && GG.appliedCoupon() ? GG.appliedCoupon().type : null),
+      shippingWaived: GG.shippingWaived ? GG.shippingWaived() : 0,
+      earnedPoints: GG.pointsForAmount ? GG.pointsForAmount() : null,
       total: GG.total()
     };
     GG.saveOrder(order);
