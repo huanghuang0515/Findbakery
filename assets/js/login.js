@@ -45,4 +45,28 @@
       pw.select();
     }
   });
+
+  /* ---- 忘記密碼 ---- */
+  var loginView = $('#loginView'), forgotForm = $('#forgotForm');
+  var fEmail = $('#fEmail'), fPw = $('#fPw'), fPw2 = $('#fPw2'), fMsg = $('#forgotMsg');
+  $('#forgotToggle').addEventListener('click', function () {
+    loginView.hidden = true; forgotForm.hidden = false;
+    fMsg.textContent = ''; fMsg.className = 'auth__err';
+    if (email.value) fEmail.value = email.value;
+    fEmail.focus();
+  });
+  $('#backToLogin').addEventListener('click', function () {
+    forgotForm.hidden = true; loginView.hidden = false; err.textContent = '';
+  });
+  forgotForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    fMsg.className = 'auth__err'; fMsg.textContent = '';
+    if (!fEmail.value.trim()) { fMsg.textContent = '請輸入電子信箱'; return; }
+    if (fPw.value !== fPw2.value) { fMsg.textContent = '兩次新密碼不一致'; return; }
+    var r = A.resetPassword(fEmail.value, fPw.value);
+    if (!r.ok) { fMsg.textContent = r.error; return; }
+    fMsg.className = 'auth__ok'; fMsg.textContent = '密碼已重設，請用新密碼登入';
+    email.value = fEmail.value; pw.value = '';
+    setTimeout(function () { forgotForm.hidden = true; loginView.hidden = false; pw.focus(); }, 1200);
+  });
 })();

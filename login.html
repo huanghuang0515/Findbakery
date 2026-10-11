@@ -63,23 +63,47 @@
         <h1 class="auth__title">會員登入</h1>
         <p class="auth__sub">歡迎回到 Gothel's Garden，登入以查看你的會員中心。</p>
 
-        <form class="auth__form" id="loginForm" novalidate>
-          <div class="field">
-            <label for="email">電子信箱</label>
-            <input id="email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required>
-          </div>
-          <div class="field">
-            <label for="password">密碼</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="請輸入密碼" required>
-          </div>
-          <p class="auth__err" id="loginErr" role="alert"></p>
-          <button class="btn btn--primary btn--full" type="submit">登入</button>
-        </form>
+        <div id="loginView">
+          <form class="auth__form" id="loginForm" novalidate>
+            <div class="field">
+              <label for="email">電子信箱</label>
+              <input id="email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+              <label for="password">密碼</label>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="請輸入密碼" required>
+            </div>
+            <p class="auth__err" id="loginErr" role="alert"></p>
+            <button class="btn btn--primary btn--full" type="submit">登入</button>
+          </form>
 
-        <div class="auth__demo">
-          <p class="auth__demo-title">示範帳號（點擊即可自動填入）</p>
-          <div class="auth__demo-list" id="demoList"></div>
+          <p class="auth__alt"><button type="button" class="auth__link" id="forgotToggle">忘記密碼？</button></p>
+
+          <div class="auth__demo">
+            <p class="auth__demo-title">示範帳號（點擊即可自動填入）</p>
+            <div class="auth__demo-list" id="demoList"></div>
+          </div>
         </div>
+
+        <form class="auth__form" id="forgotForm" hidden novalidate>
+          <h2 class="auth__subtitle">重設密碼</h2>
+          <p class="auth__sub">輸入註冊信箱與新密碼即可重設（純前端 demo，不寄送郵件）。</p>
+          <div class="field">
+            <label for="fEmail">電子信箱</label>
+            <input id="fEmail" type="email" autocomplete="username" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label for="fPw">新密碼</label>
+            <input id="fPw" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+          </div>
+          <div class="field">
+            <label for="fPw2">確認新密碼</label>
+            <input id="fPw2" type="password" autocomplete="new-password" placeholder="再次輸入新密碼">
+          </div>
+          <p class="auth__err" id="forgotMsg" role="alert"></p>
+          <button class="btn btn--primary btn--full" type="submit">重設密碼</button>
+          <p class="auth__alt"><button type="button" class="auth__link" id="backToLogin">← 返回登入</button></p>
+        </form>
 
         <p class="auth__foot">還不是會員？<a href="#">立即註冊</a></p>
       </div>

@@ -46,15 +46,41 @@ window.GGAdmin = (function () {
     return { ok: true };
   }
   function updateAdmin(email, patch) {
-    var a = findAdmin(email);
-    if (!a) return;
-    for (var k in patch) if (patch.hasOwnProperty(k)) a[k] = patch[k];
-    write(K_ADMINS, adminAccounts());
+    var list = adminAccounts(), e = String(email || '').trim().toLowerCase();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].email === e) {
+        for (var k in patch) if (patch.hasOwnProperty(k)) list[i][k] = patch[k];
+        write(K_ADMINS, list); return;
+      }
+    }
   }
   function removeAdmin(email) {
     var list = adminAccounts().filter(function (a) { return a.email !== String(email || '').toLowerCase(); });
     if (!list.length) return { ok: false, error: '至少需保留一個管理員帳號' };
     write(K_ADMINS, list);
+    return { ok: true };
+  }
+  /* 從清單中取得同一個物件參考（供變更密碼寫回用）*/
+  function adminInList(list, email) {
+    var e = String(email || '').trim().toLowerCase();
+    for (var i = 0; i < list.length; i++) if (list[i].email === e) return list[i];
+    return null;
+  }
+  /* 更換密碼：需驗證目前密碼 */
+  function changeAdminPassword(email, oldpw, newpw) {
+    var list = adminAccounts(), a = adminInList(list, email);
+    if (!a) return { ok: false, error: '查無此帳號' };
+    if (a.pw !== oldpw) return { ok: false, error: '目前密碼錯誤' };
+    if (!newpw || newpw.length < 6) return { ok: false, error: '新密碼至少 6 碼' };
+    a.pw = newpw; write(K_ADMINS, list);
+    return { ok: true };
+  }
+  /* 忘記密碼：以管理員信箱重設（demo，無寄信）*/
+  function resetAdminPassword(email, newpw) {
+    var list = adminAccounts(), a = adminInList(list, email);
+    if (!a) return { ok: false, error: '查無此管理員信箱' };
+    if (!newpw || newpw.length < 6) return { ok: false, error: '新密碼至少 6 碼' };
+    a.pw = newpw; write(K_ADMINS, list);
     return { ok: true };
   }
 
@@ -492,6 +518,7 @@ window.GGAdmin = (function () {
     STATUSES: STATUSES,
     login: login, logout: logout, current: current, isLoggedIn: isLoggedIn, demoAdmin: demoAdmin,
     adminAccounts: adminAccounts, addAdmin: addAdmin, updateAdmin: updateAdmin, removeAdmin: removeAdmin,
+    changeAdminPassword: changeAdminPassword, resetAdminPassword: resetAdminPassword,
     products: products, findProduct: findProduct, updateProduct: updateProduct,
     toggleActive: toggleActive, addProduct: addProduct, removeProduct: removeProduct,
     orders: orders, setOrderStatus: setOrderStatus,

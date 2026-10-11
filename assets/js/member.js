@@ -37,13 +37,15 @@
       { key: 'ranking',    label: '消費商品排行' },
       { key: 'favourites', label: '喜好商品清單' },
       { key: 'history',    label: '過去購物清單' },
-      { key: 'orders',     label: '訂單管理' }
+      { key: 'orders',     label: '訂單管理' },
+      { key: 'password',   label: '變更密碼' }
     ],
     B: [
-      { key: 'info',    label: '會員資訊' },
-      { key: 'spend',   label: '累積消費' },
-      { key: 'history', label: '過去購物清單' },
-      { key: 'orders',  label: '訂單管理' }
+      { key: 'info',     label: '會員資訊' },
+      { key: 'spend',    label: '累積消費' },
+      { key: 'history',  label: '過去購物清單' },
+      { key: 'orders',   label: '訂單管理' },
+      { key: 'password', label: '變更密碼' }
     ]
   };
   var nav = NAV[m.type] || NAV.C;
@@ -192,6 +194,31 @@
       '</table></div>';
   };
 
+  panels.password = function () {
+    return '<h2 class="panel__title">變更密碼</h2>' +
+      '<form class="auth__form panel__form" id="pwForm" novalidate>' +
+        '<div class="field"><label for="curPw">目前密碼</label><input id="curPw" type="password" autocomplete="current-password"></div>' +
+        '<div class="field"><label for="newPw">新密碼</label><input id="newPw" type="password" autocomplete="new-password" placeholder="至少 6 碼"></div>' +
+        '<div class="field"><label for="newPw2">確認新密碼</label><input id="newPw2" type="password" autocomplete="new-password" placeholder="再次輸入新密碼"></div>' +
+        '<p class="auth__err" id="pwMsg" role="alert"></p>' +
+        '<button class="btn btn--primary" type="submit">更新密碼</button>' +
+      '</form>';
+  };
+  function bindPwForm() {
+    var form = $('#pwForm');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = $('#pwMsg'); msg.className = 'auth__err'; msg.textContent = '';
+      var np = $('#newPw').value, np2 = $('#newPw2').value;
+      if (np !== np2) { msg.textContent = '兩次新密碼不一致'; return; }
+      var r = A.changePassword(m.email, $('#curPw').value, np);
+      if (!r.ok) { msg.textContent = r.error; return; }
+      msg.className = 'auth__ok'; msg.textContent = '密碼已更新';
+      form.reset();
+    });
+  }
+
   /* ---- 切換 ---- */
   var content = $('#memberContent');
   var navBtns = Array.prototype.slice.call(document.querySelectorAll('.member__nav-item'));
@@ -199,6 +226,7 @@
   function show(key) {
     if (!panels[key]) key = nav[0].key;
     content.innerHTML = '<div class="panel">' + panels[key]() + '</div>';
+    if (key === 'password') bindPwForm();
     navBtns.forEach(function (b) { b.classList.toggle('is-active', b.dataset.panel === key); });
     if (location.hash.slice(1) !== key) history.replaceState(null, '', '#' + key);
   }

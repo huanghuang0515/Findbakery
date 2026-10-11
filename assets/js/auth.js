@@ -66,14 +66,40 @@ window.GGAuth = (function () {
     ];
   }
 
+  /* ---- 密碼覆寫層（更換／重設密碼存於 localStorage；純前端 demo）---- */
+  var PW_KEY = 'gg.member.pw';   /* { email: 新密碼 } */
+  function pwOverrides() { try { return JSON.parse(localStorage.getItem(PW_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function effectivePw(email, acc) { var ov = pwOverrides(); return (ov[email] != null) ? ov[email] : acc.pw; }
+  function setPw(email, newpw) { var ov = pwOverrides(); ov[email] = newpw; try { localStorage.setItem(PW_KEY, JSON.stringify(ov)); } catch (e) {} }
+  function emailExists(email) { return !!ACCOUNTS[String(email || '').trim().toLowerCase()]; }
+
   function login(email, pw) {
     email = String(email || '').trim().toLowerCase();
     var acc = ACCOUNTS[email];
     if (!acc) return { ok: false, error: '查無此帳號' };
-    if (acc.pw !== pw) return { ok: false, error: '密碼錯誤' };
+    if (effectivePw(email, acc) !== pw) return { ok: false, error: '密碼錯誤' };
     var session = { type: acc.type, email: email };
     try { localStorage.setItem(KEY, JSON.stringify(session)); } catch (e) {}
     return { ok: true, type: acc.type };
+  }
+
+  /* 更換密碼：需驗證目前密碼 */
+  function changePassword(email, oldpw, newpw) {
+    email = String(email || '').trim().toLowerCase();
+    var acc = ACCOUNTS[email];
+    if (!acc) return { ok: false, error: '查無此帳號' };
+    if (effectivePw(email, acc) !== oldpw) return { ok: false, error: '目前密碼錯誤' };
+    if (!newpw || newpw.length < 6) return { ok: false, error: '新密碼至少 6 碼' };
+    setPw(email, newpw);
+    return { ok: true };
+  }
+  /* 忘記密碼：以信箱重設（demo，無寄信）*/
+  function resetPassword(email, newpw) {
+    email = String(email || '').trim().toLowerCase();
+    if (!ACCOUNTS[email]) return { ok: false, error: '查無此信箱' };
+    if (!newpw || newpw.length < 6) return { ok: false, error: '新密碼至少 6 碼' };
+    setPw(email, newpw);
+    return { ok: true };
   }
 
   function logout() {
@@ -99,6 +125,9 @@ window.GGAuth = (function () {
     login: login,
     logout: logout,
     current: current,
-    isLoggedIn: isLoggedIn
+    isLoggedIn: isLoggedIn,
+    emailExists: emailExists,
+    changePassword: changePassword,
+    resetPassword: resetPassword
   };
 })();

@@ -58,6 +58,7 @@
             <svg class="admin-chip__caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="admin-dropdown" id="userDropdown" hidden role="menu">
+            <button class="admin-dropdown__item" type="button" id="changePwBtn" role="menuitem">變更密碼</button>
             <button class="admin-dropdown__item admin-dropdown__item--danger" type="button" id="logoutBtn" role="menuitem">登出</button>
           </div>
         </div>
@@ -93,6 +94,26 @@
       <div class="admin-modal__actions">
         <button class="btn btn--line" type="button" data-close>取消</button>
         <button class="btn btn--primary" type="submit" id="modalSave">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 變更密碼 Modal -->
+<div class="admin-modal" id="pwModal" hidden>
+  <div class="admin-modal__backdrop" data-close></div>
+  <div class="admin-modal__box" role="dialog" aria-modal="true" aria-labelledby="pwModalTitle">
+    <h2 class="admin-modal__title" id="pwModalTitle">變更密碼</h2>
+    <form id="pwForm" class="admin-form">
+      <div class="form-grid">
+        <div class="field field--full"><label for="curPw">目前密碼</label><input id="curPw" type="password" autocomplete="current-password"></div>
+        <div class="field field--full"><label for="newPw">新密碼</label><input id="newPw" type="password" autocomplete="new-password" placeholder="至少 6 碼"></div>
+        <div class="field field--full"><label for="newPw2">確認新密碼</label><input id="newPw2" type="password" autocomplete="new-password" placeholder="再次輸入新密碼"></div>
+      </div>
+      <p class="auth__err" id="pwMsg" role="alert"></p>
+      <div class="admin-modal__actions">
+        <button class="btn btn--line" type="button" data-close>取消</button>
+        <button class="btn btn--primary" type="submit">更新密碼</button>
       </div>
     </form>
   </div>

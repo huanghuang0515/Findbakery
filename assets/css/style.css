@@ -1448,6 +1448,16 @@ html.js .reveal--line.is-in .star--divider{ opacity:1; }
 .auth__form{ text-align:left; }
 .auth__form .field{ margin-bottom:22px; }
 .auth__err{ min-height:1.4em; margin:0 0 14px; font-size:var(--fs-sm); color:#b4443c; }
+.auth__ok{ min-height:1.4em; margin:0 0 14px; font-size:var(--fs-sm); color:#4a6b46; }
+.auth__subtitle{ font-family:var(--ff-display); font-weight:400; font-size:clamp(20px,1.9vw,28px);
+  letter-spacing:.04em; margin:0 0 10px; }
+.auth__alt{ margin:14px 0 0; text-align:center; }
+.auth__link{ font-size:var(--fs-sm); color:var(--ink-soft); letter-spacing:.04em;
+  border-bottom:1px solid var(--line); transition:color .2s, border-color .2s; }
+.auth__link:hover{ color:var(--ink); border-color:var(--ink); }
+/* 會員中心：變更密碼表單寬度 */
+.panel__form{ max-width:420px; }
+.panel__form .field{ margin-bottom:20px; }
 .auth__demo{ margin-top:clamp(28px,3.4vw,44px); padding-top:clamp(22px,2.6vw,32px);
   border-top:1px solid var(--line); text-align:left; }
 .auth__demo-title{ font-size:var(--fs-sm); color:var(--muted); letter-spacing:.06em; margin:0 0 14px; }

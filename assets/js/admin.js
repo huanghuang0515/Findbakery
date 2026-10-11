@@ -693,6 +693,27 @@
   /* 登出 */
   $('#logoutBtn').addEventListener('click', function () { A.logout(); location.href = 'admin-login.html'; });
 
+  /* 變更密碼 Modal */
+  var pwModal = $('#pwModal');
+  function openPwModal() {
+    $('#pwForm').reset();
+    $('#pwMsg').textContent = ''; $('#pwMsg').className = 'auth__err';
+    pwModal.hidden = false; $('#curPw').focus();
+  }
+  function closePwModal() { pwModal.hidden = true; }
+  $('#changePwBtn').addEventListener('click', function () { closeTop(); openPwModal(); });
+  pwModal.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closePwModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pwModal.hidden) closePwModal(); });
+  $('#pwForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msg = $('#pwMsg'); msg.className = 'auth__err'; msg.textContent = '';
+    var np = $('#newPw').value, np2 = $('#newPw2').value;
+    if (np !== np2) { msg.textContent = '兩次新密碼不一致'; return; }
+    var r = A.changeAdminPassword(admin.email, $('#curPw').value, np);
+    if (!r.ok) { msg.textContent = r.error; return; }
+    closePwModal(); toast('密碼已更新');
+  });
+
   /* ====================================================
      Top bar：通知 + 使用者選單
      ==================================================== */
