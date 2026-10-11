@@ -32,23 +32,56 @@
     '<span class="admin-user__name">' + esc(admin.name) + '</span>' +
     '<span class="admin-user__role">' + esc(admin.role) + '</span>';
 
-  var NAV = [
-    { key: 'dashboard', label: '儀表板' },
-    { key: 'products',  label: '商品管理' },
-    { key: 'orders',    label: '訂單管理' },
-    { key: 'members',   label: '會員管理' },
-    { key: 'marketing', label: '數據行銷' },
-    { key: 'shipping',  label: '運費管理' },
-    { key: 'points',    label: '點數管理' },
-    { key: 'coupons',   label: '優惠券管理' },
-    { key: 'media',     label: '媒體庫' },
-    { key: 'admins',    label: '管理員帳號' },
-    { key: 'payment',   label: '金流串接' },
-    { key: 'einvoice',  label: '電子發票' },
-    { key: 'changelog', label: '版本紀錄' }
+  var ICONS = {
+    dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+    products:  '<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+    orders:    '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 11h7M8.5 15h7"/>',
+    members:   '<circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-6.6 7.5-6.6s7.5 2.4 7.5 6.6"/>',
+    marketing: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M16 8.5a4 4 0 0 1 0 7"/>',
+    shipping:  '<rect x="2.5" y="6" width="12" height="9" rx="1"/><path d="M14.5 9h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/>',
+    points:    '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9z"/>',
+    coupons:   '<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14.5 7v10"/>',
+    media:     '<rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="1.8"/><path d="M5 18l5-5 4 4 2-2 3 3"/>',
+    admins:    '<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9.5 12l1.8 1.8 3.5-3.6"/>',
+    payment:   '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',
+    einvoice:  '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    changelog: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>'
+  };
+  function navIcon(key) {
+    return '<svg class="admin-nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (ICONS[key] || '') + '</svg>';
+  }
+
+  var NAV_GROUPS = [
+    { label: '總覽', items: [
+      { key: 'dashboard', label: '儀表板' }
+    ] },
+    { label: '銷售營運', items: [
+      { key: 'products',  label: '商品管理' },
+      { key: 'orders',    label: '訂單管理' },
+      { key: 'coupons',   label: '優惠券管理' },
+      { key: 'shipping',  label: '運費管理' }
+    ] },
+    { label: '會員與行銷', items: [
+      { key: 'members',   label: '會員管理' },
+      { key: 'points',    label: '點數管理' },
+      { key: 'marketing', label: '數據行銷' }
+    ] },
+    { label: '內容', items: [
+      { key: 'media',     label: '媒體庫' }
+    ] },
+    { label: '系統設定', items: [
+      { key: 'admins',    label: '管理員帳號' },
+      { key: 'payment',   label: '金流串接' },
+      { key: 'einvoice',  label: '電子發票' },
+      { key: 'changelog', label: '版本紀錄' }
+    ] }
   ];
-  $('#adminNav').innerHTML = NAV.map(function (n) {
-    return '<button class="admin-nav__item" type="button" data-nav="' + n.key + '">' + n.label + '</button>';
+  $('#adminNav').innerHTML = NAV_GROUPS.map(function (g) {
+    return '<div class="admin-nav__group"><p class="admin-nav__label">' + g.label + '</p>' +
+      g.items.map(function (n) {
+        return '<button class="admin-nav__item" type="button" data-nav="' + n.key + '">' +
+          navIcon(n.key) + '<span class="admin-nav__text">' + n.label + '</span></button>';
+      }).join('') + '</div>';
   }).join('');
 
   var content = $('#adminContent');

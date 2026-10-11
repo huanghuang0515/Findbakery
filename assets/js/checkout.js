@@ -24,9 +24,50 @@
     }).join('');
     $('#sumSubtotal').textContent = GG.money(GG.subtotal());
     $('#sumShipping').textContent = GG.shipping() === 0 ? '免運' : GG.money(GG.shipping());
+    var disc = GG.discount ? GG.discount() : 0;
+    var dRow = $('#discountRow');
+    if (dRow) {
+      var c = GG.appliedCoupon && GG.appliedCoupon();
+      if (c && disc > 0) {
+        dRow.hidden = false;
+        $('#discountLabel').textContent = '折扣（' + c.code + '）';
+        $('#sumDiscount').textContent = '-' + GG.money(disc);
+      } else { dRow.hidden = true; }
+    }
     $('#sumTotal').textContent = GG.money(GG.total());
+    renderCouponState();
+  }
+
+  /* 折扣碼：反映目前套用狀態 */
+  function renderCouponState() {
+    var apply = $('#couponApply'), input = $('#couponInput'), msg = $('#couponMsg');
+    if (!apply) return;
+    var c = GG.appliedCoupon && GG.appliedCoupon();
+    if (c) {
+      input.value = c.code; input.disabled = true;
+      apply.textContent = '移除'; apply.dataset.mode = 'remove';
+      msg.textContent = '已套用折扣碼 ' + c.code; msg.className = 'coupon__msg is-ok';
+    } else {
+      input.disabled = false;
+      apply.textContent = '套用'; apply.dataset.mode = 'apply';
+      if (!msg.classList.contains('is-err')) { msg.textContent = ''; msg.className = 'coupon__msg'; }
+    }
+  }
+  function bindCoupon() {
+    var apply = $('#couponApply'), input = $('#couponInput'), msg = $('#couponMsg');
+    if (!apply) return;
+    apply.addEventListener('click', function () {
+      if (apply.dataset.mode === 'remove') { GG.clearCoupon(); msg.textContent = ''; msg.className = 'coupon__msg'; renderSummary(); return; }
+      var code = (input.value || '').trim();
+      if (!code) { input.focus(); return; }
+      var r = GG.applyCoupon(code);
+      if (r.ok) { if (window.ggToast) window.ggToast('已套用折扣碼 ' + code.toUpperCase()); renderSummary(); }
+      else { msg.textContent = r.msg; msg.className = 'coupon__msg is-err'; }
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply.click(); } });
   }
   renderSummary();
+  bindCoupon();
 
   /* ---- 配送方式：門市自取時隱藏地址欄並免除必填 ---- */
   var addrField = $('#addrField'), addrInput = $('#address');
@@ -105,6 +146,8 @@
       lines: GG.lines(),
       subtotal: GG.subtotal(),
       shipping: GG.shipping(),
+      discount: GG.discount ? GG.discount() : 0,
+      coupon: (GG.appliedCoupon && GG.appliedCoupon() ? GG.appliedCoupon().code : null),
       total: GG.total()
     };
     GG.saveOrder(order);

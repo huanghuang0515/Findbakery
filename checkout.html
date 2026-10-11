@@ -125,6 +125,14 @@
           <ul class="mini-lines" id="miniLines"></ul>
           <div class="summary__row"><span>小計</span><span id="sumSubtotal">$0</span></div>
           <div class="summary__row"><span>運費</span><span id="sumShipping">$0</span></div>
+          <div class="coupon">
+            <div class="coupon__field">
+              <input type="text" id="couponInput" placeholder="輸入折扣碼" aria-label="折扣碼" autocomplete="off">
+              <button type="button" class="btn-line" id="couponApply" data-mode="apply">套用</button>
+            </div>
+            <p class="coupon__msg" id="couponMsg" role="status" aria-live="polite"></p>
+          </div>
+          <div class="summary__row summary__row--discount" id="discountRow" hidden><span id="discountLabel">折扣</span><span id="sumDiscount">-$0</span></div>
           <dl class="summary__total"><dt>應付總計</dt><dd id="sumTotal">$0</dd></dl>
           <button class="btn btn--primary btn--full" type="submit" id="placeBtn">確認下單</button>
           <a class="summary__back" href="cart.html">返回購物車</a>

@@ -158,7 +158,66 @@ window.GG = (function () {
     } catch (e) {}
     return s >= free ? 0 : fee;
   }
-  function total() { return subtotal() + shipping(); }
+  /* ---- 優惠券（連動後台「優惠券管理」gg.admin.coupons）---- */
+  var COUPON_KEY = 'gg.coupon';   /* 目前套用的折扣碼 { code } */
+  function adminCoupons() {
+    var r = read('gg.admin.coupons', null);
+    return Array.isArray(r) ? r : [];
+  }
+  function findCouponDef(code) {
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return null;
+    var list = adminCoupons();
+    for (var i = 0; i < list.length; i++) if (String(list[i].code).toUpperCase() === code) return list[i];
+    return null;
+  }
+  function couponExpired(c) {
+    if (!c || !c.expiry) return false;
+    var mm = String(c.expiry).match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+    if (!mm) return false;
+    return new Date() > new Date(+mm[1], +mm[2] - 1, +mm[3], 23, 59, 59);
+  }
+  function couponDiscountOf(c, sub) {
+    if (!c) return 0;
+    if (sub == null) sub = subtotal();
+    var d = c.type === 'percent' ? Math.round(sub * (c.value || 0) / 100) : (c.value || 0);
+    return Math.max(0, Math.min(d, sub));
+  }
+  /* 驗證折扣碼是否可用於目前購物車；回 { ok, coupon, discount } 或 { ok:false, msg } */
+  function checkCoupon(code) {
+    var c = findCouponDef(code);
+    if (!c) return { ok: false, msg: '查無此優惠碼' };
+    if (!c.active) return { ok: false, msg: '此優惠碼已停用' };
+    if (couponExpired(c)) return { ok: false, msg: '此優惠碼已過期' };
+    var sub = subtotal();
+    if (c.minSpend && sub < c.minSpend) return { ok: false, msg: '消費滿 ' + money(c.minSpend) + ' 才能使用此碼' };
+    return { ok: true, coupon: c, discount: couponDiscountOf(c, sub) };
+  }
+  function applyCoupon(code) {
+    var r = checkCoupon(code);
+    if (r.ok) {
+      write(COUPON_KEY, { code: String(r.coupon.code).toUpperCase() });
+      try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+    }
+    return r;
+  }
+  function clearCoupon() {
+    try { localStorage.removeItem(COUPON_KEY); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+  }
+  /* 目前套用且仍有效的優惠券（失效則回 null，不折抵）*/
+  function appliedCoupon() {
+    var saved = read(COUPON_KEY, null);
+    if (!saved || !saved.code) return null;
+    var r = checkCoupon(saved.code);
+    return r.ok ? r.coupon : null;
+  }
+  function discount() {
+    var c = appliedCoupon();
+    return c ? couponDiscountOf(c, subtotal()) : 0;
+  }
+
+  function total() { return Math.max(0, subtotal() - discount()) + shipping(); }
 
   /* 展開購物車為含商品明細的列表，供渲染用 */
   function lines() {
@@ -213,6 +272,8 @@ window.GG = (function () {
     catalog: catalog, find: find, baseCatalog: baseCatalog,
     getCart: getCart, addItem: addItem, setQty: setQty, removeItem: removeItem, clearCart: clearCart,
     count: count, subtotal: subtotal, shipping: shipping, total: total, lines: lines,
+    discount: discount, appliedCoupon: appliedCoupon, checkCoupon: checkCoupon,
+    applyCoupon: applyCoupon, clearCoupon: clearCoupon,
     getFavs: getFavs,
     saveOrder: saveOrder, getOrder: getOrder,
     money: money, mountBadge: mountBadge,

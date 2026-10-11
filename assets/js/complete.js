@@ -15,8 +15,9 @@
     return;
   }
 
-  /* 訂單已成立 → 清空購物車（頁首件數同步歸零） */
+  /* 訂單已成立 → 清空購物車與已套用折扣碼（頁首件數同步歸零） */
   GG.clearCart();
+  if (GG.clearCoupon) GG.clearCoupon();
   if (GG.mountBadge) GG.mountBadge();
 
   /* ---- 填入內容 ---- */
@@ -34,6 +35,14 @@
 
   $('#sumSubtotal').textContent = GG.money(order.subtotal);
   $('#sumShipping').textContent = order.shipping === 0 ? '免運' : GG.money(order.shipping);
+  if (order.discount && order.discount > 0) {
+    var dRow = $('#discountRow');
+    if (dRow) {
+      dRow.hidden = false;
+      $('#discountLabel').textContent = '折扣' + (order.coupon ? '（' + order.coupon + '）' : '');
+      $('#sumDiscount').textContent = '-' + GG.money(order.discount);
+    }
+  }
   $('#sumTotal').textContent = GG.money(order.total);
 
   function esc(s) {

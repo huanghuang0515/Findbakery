@@ -37,14 +37,53 @@
   }
 
   function renderSummary() {
-    var sub = GG.subtotal(), ship = GG.shipping();
+    var sub = GG.subtotal(), ship = GG.shipping(), disc = GG.discount ? GG.discount() : 0;
     $('#sumSubtotal').textContent = GG.money(sub);
     $('#sumShipping').textContent = ship === 0 ? '免運' : GG.money(ship);
+    var dRow = $('#discountRow');
+    if (dRow) {
+      var c = GG.appliedCoupon && GG.appliedCoupon();
+      if (c && disc > 0) {
+        dRow.hidden = false;
+        $('#discountLabel').textContent = '折扣（' + c.code + '）';
+        $('#sumDiscount').textContent = '-' + GG.money(disc);
+      } else { dRow.hidden = true; }
+    }
     $('#sumTotal').textContent = GG.money(GG.total());
+    renderCouponState();
     var hint = $('#sumHint');
     if (sub === 0) { hint.textContent = ''; }
     else if (ship === 0) { hint.textContent = '已達免運門檻。'; }
     else { hint.textContent = '再買 ' + GG.money(GG.FREE_SHIP - sub) + ' 即可免運（滿 ' + GG.money(GG.FREE_SHIP) + '）。'; }
+  }
+
+  /* 折扣碼：反映目前套用狀態 */
+  function renderCouponState() {
+    var apply = $('#couponApply'), input = $('#couponInput'), msg = $('#couponMsg');
+    if (!apply) return;
+    var c = GG.appliedCoupon && GG.appliedCoupon();
+    if (c) {
+      input.value = c.code; input.disabled = true;
+      apply.textContent = '移除'; apply.dataset.mode = 'remove';
+      msg.textContent = '已套用折扣碼 ' + c.code; msg.className = 'coupon__msg is-ok';
+    } else {
+      input.disabled = false;
+      apply.textContent = '套用'; apply.dataset.mode = 'apply';
+      if (!msg.classList.contains('is-err')) { msg.textContent = ''; msg.className = 'coupon__msg'; }
+    }
+  }
+  function bindCoupon() {
+    var apply = $('#couponApply'), input = $('#couponInput'), msg = $('#couponMsg');
+    if (!apply) return;
+    apply.addEventListener('click', function () {
+      if (apply.dataset.mode === 'remove') { GG.clearCoupon(); msg.textContent = ''; msg.className = 'coupon__msg'; render(); return; }
+      var code = (input.value || '').trim();
+      if (!code) { input.focus(); return; }
+      var r = GG.applyCoupon(code);
+      if (r.ok) { if (window.ggToast) window.ggToast('已套用折扣碼 ' + code.toUpperCase()); render(); }
+      else { msg.textContent = r.msg; msg.className = 'coupon__msg is-err'; }
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply.click(); } });
   }
 
   function render() {
@@ -96,4 +135,5 @@
   });
 
   render();
+  bindCoupon();
 })();

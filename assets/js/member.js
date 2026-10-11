@@ -75,11 +75,27 @@
     return '<h2 class="panel__title">會員資訊</h2><dl class="info-list">' + rows.join('') + '</dl>';
   };
 
+  /* 紅利點數：依後台「點數管理」規則（gg.admin.points）計算；功能關閉回 null */
+  function pointsInfo() {
+    try {
+      var r = localStorage.getItem('gg.admin.points');
+      var c = r ? JSON.parse(r) : null;
+      if (!c || c.enabled === false) return null;
+      var per = c.earnPer || 100, pts = c.earnPoints || 0;
+      var earned = Math.floor((m.spendTotal / per) * pts);
+      var adj = (c.ledger && c.ledger[m.email]) || 0;
+      return { points: earned + adj, per: per, pts: pts, redeem: c.redeemRate || 0 };
+    } catch (e) { return null; }
+  }
+
   panels.spend = function () {
+    var pt = pointsInfo();
+    var ptCard = pt ? '<div class="stat"><span class="stat__num">' + pt.points + ' 點</span><span class="stat__lbl">目前紅利點數</span></div>' : '';
     var stats =
-      '<div class="stat-grid">' +
+      '<div class="stat-grid' + (pt ? ' stat-grid--3' : '') + '">' +
         '<div class="stat"><span class="stat__num">' + money(m.spendTotal) + '</span><span class="stat__lbl">累積消費金額</span></div>' +
         '<div class="stat"><span class="stat__num">' + m.orderCount + '</span><span class="stat__lbl">累積訂單數</span></div>' +
+        ptCard +
       '</div>';
     var extra;
     if (m.type === 'B') {
@@ -93,7 +109,9 @@
           '<div class="tier__bar"><span style="width:' + pct + '%"></span></div>' +
         '</div>';
     }
-    return '<h2 class="panel__title">累積消費</h2>' + stats + extra;
+    var ptNote = pt ? '<p class="panel__note">每消費 ' + money(pt.per) + ' 可得 ' + pt.pts + ' 點' +
+      (pt.redeem ? '，1 點可折抵 ' + money(pt.redeem) : '') + '；點數規則由門市後台設定。</p>' : '';
+    return '<h2 class="panel__title">累積消費</h2>' + stats + extra + ptNote;
   };
 
   panels.ranking = function () {
