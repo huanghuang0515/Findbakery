@@ -1610,7 +1610,7 @@ html.js .reveal--line.is-in .star--divider{ opacity:1; }
 .admin-user__role{ display:block; margin-top:4px; font-size:12px; color:#9b968c; letter-spacing:.1em; }
 .admin-side__foot .btn--line{ border-color:rgba(255,255,255,.4); color:#e9e6df; }
 .admin-side__foot .btn--line:hover{ background:#fff; color:var(--ink); border-color:#fff; }
-.admin-side__site{ display:block; text-align:center; margin-top:14px; font-size:var(--fs-sm); color:#9b968c; }
+.admin-side__site{ display:block; text-align:center; margin-top:0; font-size:var(--fs-sm); color:#9b968c; }
 .admin-side__site:hover{ color:#fff; }
 
 /* 主內容 */
