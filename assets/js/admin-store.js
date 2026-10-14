@@ -446,24 +446,43 @@ window.GGAdmin = (function () {
      版本紀錄
      ====================================================== */
   var K_LOG = 'gg.admin.changelog';
+  /* 語意化版本號 vMAJOR.MINOR.PATCH
+     type：major（重大，主碼+1）／feature（新功能，中碼+1）／optimize（優化，尾碼+1）*/
   function seedChangelog() {
     return [
-      { version: 'v1.6.0', date: '2026.10.11', author: 'Amy 陳', items: [
-        '後台登入狀態移至 top bar 右側（頭像選單＋前台連結／登出）',
-        '新增通知功能：低庫存、待處理訂單，紅點徽章與已讀狀態',
-        '結帳新增點數折抵（受餘額與折扣後餘額雙重上限，下單回饋／扣抵會員點數）',
+      { version: 'v1.7.1', date: '2026.10.14', author: 'Amy 陳', type: 'optimize', items: [
+        '版本紀錄改用語意化版本號（中碼＝新功能、尾碼＝優化），補齊歷次更動',
+        '新增版本時可依類型自動建議下一個版號' ] },
+      { version: 'v1.7.0', date: '2026.10.13', author: 'Amy 陳', type: 'feature', items: [
+        '新增忘記密碼／更換密碼：前台會員（登入頁＋會員中心）與後台管理員（登入頁＋使用者選單）',
+        '修正管理員帳號停用／啟用未正確儲存的問題' ] },
+      { version: 'v1.6.2', date: '2026.10.13', author: 'Amy 陳', type: 'optimize', items: [
+        '修正儀表板「熱銷商品／近期訂單」雙欄面板未對齊' ] },
+      { version: 'v1.6.1', date: '2026.10.13', author: 'Amy 陳', type: 'optimize', items: [
+        '「前往前台網站」連結移回側邊欄下方' ] },
+      { version: 'v1.6.0', date: '2026.10.12', author: 'Amy 陳', type: 'feature', items: [
+        '結帳可用紅利點數折抵金額（受點數餘額與折扣後餘額雙重上限）',
+        '後台登入狀態移至 top bar，新增通知功能（低庫存、待處理訂單）',
         '優惠券百分比可設折扣上限（如 15% 最多折 $200）' ] },
-      { version: 'v1.5.0', date: '2026.10.11', author: 'Amy 陳', items: [
+      { version: 'v1.5.0', date: '2026.10.12', author: 'Amy 陳', type: 'feature', items: [
         '結帳頁／完成頁顯示「本次可／已獲得 X 點」',
         '優惠券新增「免運」類型，套用後前台運費歸零' ] },
-      { version: 'v1.4.0', date: '2026.10.11', author: 'Amy 陳', items: [
+      { version: 'v1.4.0', date: '2026.10.11', author: 'Amy 陳', type: 'feature', items: [
         '優惠券接前台結帳：購物車／結帳輸入折扣碼即時折抵',
         '會員中心「累積消費」顯示紅利點數與折抵說明',
         '後台側欄改為 5 類分組並加上 icon' ] },
-      { version: 'v1.3.0', date: '2026.10.11', author: 'Amy 陳', items: ['新增後台模組：運費、點數、媒體庫、優惠券、管理員帳號、金流串接、電子發票、版本紀錄'] },
-      { version: 'v1.2.0', date: '2026.09.20', author: 'Amy 陳', items: ['後台商品改價／下架即時連動前台', '新增數據行銷與 CSV 匯出'] },
-      { version: 'v1.1.0', date: '2026.09.08', author: 'Amy 陳', items: ['完成會員中心（C／B 端）與購物結帳流程'] },
-      { version: 'v1.0.0', date: '2026.08.30', author: 'Amy 陳', items: ['Gothel\'s Garden 品牌官網上線'] }
+      { version: 'v1.3.0', date: '2026.10.11', author: 'Amy 陳', type: 'feature', items: [
+        '後台新增 8 個模組：運費、點數、媒體庫、優惠券、管理員帳號、金流串接、電子發票、版本紀錄' ] },
+      { version: 'v1.2.1', date: '2026.10.11', author: 'Amy 陳', type: 'optimize', items: [
+        '修正首次載入時裝飾星花的黑色閃現（FOUC）',
+        '樣式表加版本號，避免 GitHub Pages 舊版快取' ] },
+      { version: 'v1.2.0', date: '2026.09.20', author: 'Amy 陳', type: 'feature', items: [
+        '後台管理系統（儀表板／商品／訂單／會員／數據行銷）',
+        '後台改價／下架即時連動前台、行銷名單匯出 CSV' ] },
+      { version: 'v1.1.0', date: '2026.09.08', author: 'Amy 陳', type: 'feature', items: [
+        '會員中心（C／B 端）與購物結帳流程（購物車→結帳→完成）' ] },
+      { version: 'v1.0.0', date: '2026.08.30', author: 'Amy 陳', type: 'major', items: [
+        'Gothel\'s Garden 品牌官網上線' ] }
     ];
   }
   function changelog() {
@@ -471,11 +490,25 @@ window.GGAdmin = (function () {
     if (!list) { list = seedChangelog(); write(K_LOG, list); }
     return list;
   }
+  /* 依類型推算下一個版號（以最新一筆為基準）*/
+  function bumpVersion(ver, type) {
+    var p = String(ver || 'v1.0.0').replace(/^v/i, '').split('.');
+    var a = parseInt(p[0], 10) || 1, b = parseInt(p[1], 10) || 0, c = parseInt(p[2], 10) || 0;
+    if (type === 'major') { a++; b = 0; c = 0; }
+    else if (type === 'optimize') { c++; }
+    else { b++; c = 0; }   /* feature（預設）*/
+    return 'v' + a + '.' + b + '.' + c;
+  }
+  function nextVersion(type) {
+    var list = changelog();
+    return bumpVersion(list.length ? list[0].version : 'v1.0.0', type);
+  }
   function addChangelog(obj) {
     var list = changelog();
-    list.unshift({ version: obj.version || 'v1.0.0',
+    var type = (obj.type === 'major' || obj.type === 'optimize') ? obj.type : 'feature';
+    list.unshift({ version: obj.version || nextVersion(type),
       date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-      author: obj.author || '管理員',
+      author: obj.author || '管理員', type: type,
       items: (obj.items || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; }) });
     write(K_LOG, list);
   }
@@ -531,7 +564,7 @@ window.GGAdmin = (function () {
     coupons: coupons, addCoupon: addCoupon, updateCoupon: updateCoupon, toggleCoupon: toggleCoupon, removeCoupon: removeCoupon,
     paymentConfig: paymentConfig, savePayment: savePayment,
     invoiceConfig: invoiceConfig, saveInvoice: saveInvoice,
-    changelog: changelog, addChangelog: addChangelog,
+    changelog: changelog, addChangelog: addChangelog, nextVersion: nextVersion, bumpVersion: bumpVersion,
     notifications: notifications, notifReadIds: notifReadIds, markNotifRead: markNotifRead,
     markAllNotifRead: markAllNotifRead, unreadNotifCount: unreadNotifCount,
     money: money, resetDemo: resetDemo

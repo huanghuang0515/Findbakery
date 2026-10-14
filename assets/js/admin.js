@@ -619,32 +619,44 @@
   /* ====================================================
      模組：版本紀錄
      ==================================================== */
+  function clTypeLabel(t) { return t === 'major' ? '重大' : (t === 'optimize' ? '優化' : '新功能'); }
+  function clTypeClass(t) { return t === 'major' ? 'cl-tag--major' : (t === 'optimize' ? 'cl-tag--opt' : 'cl-tag--feat'); }
   function viewChangelog() {
     var items = A.changelog().map(function (v) {
       var lis = (v.items || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
       return '<li class="cl-item"><div class="cl-item__head"><span class="cl-ver">' + esc(v.version) + '</span>' +
+        '<span class="cl-tag ' + clTypeClass(v.type) + '">' + clTypeLabel(v.type) + '</span>' +
         '<span class="cl-date">' + esc(v.date) + '</span><span class="cl-author">' + esc(v.author) + '</span></div>' +
         '<ul class="cl-list">' + lis + '</ul></li>';
     }).join('');
-    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.changelog().length + ' 筆版本紀錄。</p>' +
+    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.changelog().length + ' 筆版本紀錄。版號 <strong>vX.Y.Z</strong>：Y＝新增功能、Z＝既有功能優化。</p>' +
         '<button class="btn btn--primary" type="button" id="addLogBtn">＋ 新增版本</button></div>' +
       '<section class="admin-panel admin-panel--form" id="logFormPanel" hidden><h2 class="admin-panel__h">新增版本紀錄</h2>' +
       '<form class="admin-form" id="clForm"><div class="form-grid">' +
-        '<div class="field"><label for="clVer">版本號</label><input id="clVer" placeholder="v1.3.1" required></div>' +
+        '<div class="field"><label for="clType">更新類型</label><select id="clType">' +
+          '<option value="feature">新功能（中碼 +1）</option>' +
+          '<option value="optimize">優化（尾碼 +1）</option>' +
+          '<option value="major">重大改版（主碼 +1）</option></select></div>' +
+        '<div class="field"><label for="clVer">版本號<span class="field__hint">（依類型自動建議，可改）</span></label><input id="clVer" placeholder="v1.0.0" required></div>' +
         '<div class="field"><label for="clAuthor">作者</label><input id="clAuthor" value="' + esc(admin.name) + '"></div>' +
         '<div class="field field--full"><label for="clItems">更新內容（每行一項）</label><textarea id="clItems" rows="3" placeholder="例：修正頁尾分隔線"></textarea></div>' +
       '</div><div class="admin-actions"><button class="btn btn--line" type="button" id="clCancel">取消</button><button class="btn btn--primary" type="submit">新增</button></div></form></section>' +
       '<ol class="cl-timeline">' + items + '</ol>';
   }
   function bindChangelog() {
-    var form = $('#logFormPanel');
-    $('#addLogBtn').addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) $('#clVer').focus(); });
+    var form = $('#logFormPanel'), clType = $('#clType'), clVer = $('#clVer');
+    function suggestVer() { clVer.value = A.nextVersion(clType.value); }
+    $('#addLogBtn').addEventListener('click', function () {
+      form.hidden = !form.hidden;
+      if (!form.hidden) { suggestVer(); clType.focus(); }
+    });
+    clType.addEventListener('change', suggestVer);
     $('#clCancel').addEventListener('click', function () { form.hidden = true; });
     $('#clForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      var ver = $('#clVer').value.trim();
-      if (!ver) { $('#clVer').focus(); return; }
-      A.addChangelog({ version: ver, author: $('#clAuthor').value.trim() || admin.name, items: $('#clItems').value.split('\n') });
+      var ver = clVer.value.trim();
+      if (!ver) { clVer.focus(); return; }
+      A.addChangelog({ version: ver, type: clType.value, author: $('#clAuthor').value.trim() || admin.name, items: $('#clItems').value.split('\n') });
       render('changelog'); toast('已新增版本 ' + ver);
     });
   }

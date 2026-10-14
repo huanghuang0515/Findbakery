@@ -1775,6 +1775,10 @@ html.js .reveal--line.is-in .star--divider{ opacity:1; }
   border-radius:50%; background:var(--ink); }
 .cl-item__head{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
 .cl-ver{ font-family:var(--ff-display); font-size:clamp(17px,1.4vw,21px); color:var(--ink); letter-spacing:.04em; }
+.cl-tag{ font-size:11px; letter-spacing:.08em; padding:2px 9px; border-radius:999px; border:1px solid transparent; }
+.cl-tag--feat{ background:#eef3ec; color:#4a6b46; border-color:#d5e2d0; }      /* 新功能 */
+.cl-tag--opt{ background:#f3efe7; color:#8a6d3b; border-color:#e6dcc8; }       /* 優化 */
+.cl-tag--major{ background:var(--ink); color:#fff; border-color:var(--ink); } /* 重大 */
 .cl-date{ font-size:var(--fs-sm); color:var(--muted); }
 .cl-author{ font-size:var(--fs-xs); color:var(--muted); letter-spacing:.06em; }
 .cl-list{ margin:0; padding-left:18px; color:var(--ink-soft); font-size:var(--fs-sm); line-height:1.9; }
