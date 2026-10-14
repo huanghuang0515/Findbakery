@@ -450,6 +450,8 @@ window.GGAdmin = (function () {
      type：major（重大，主碼+1）／feature（新功能，中碼+1）／optimize（優化，尾碼+1）*/
   function seedChangelog() {
     return [
+      { version: 'v1.7.2', date: '2026.10.14', author: 'Amy 陳', type: 'optimize', items: [
+        '版本紀錄支援既有資料自動遷移：新版本會自動補進既有紀錄，無需清除快取' ] },
       { version: 'v1.7.1', date: '2026.10.14', author: 'Amy 陳', type: 'optimize', items: [
         '版本紀錄改用語意化版本號（中碼＝新功能、尾碼＝優化），補齊歷次更動',
         '新增版本時可依類型自動建議下一個版號' ] },
@@ -485,9 +487,26 @@ window.GGAdmin = (function () {
         'Gothel\'s Garden 品牌官網上線' ] }
     ];
   }
+  function verNum(v) {
+    var p = String(v || '0.0.0').replace(/^v/i, '').split('.');
+    return (parseInt(p[0], 10) || 0) * 1000000 + (parseInt(p[1], 10) || 0) * 1000 + (parseInt(p[2], 10) || 0);
+  }
   function changelog() {
     var list = read(K_LOG, null);
-    if (!list) { list = seedChangelog(); write(K_LOG, list); }
+    if (!list) { list = seedChangelog(); write(K_LOG, list); return list; }
+    /* 遷移：把種子新增的版本補進既有資料、補上缺少的 type，
+       讓既有使用者（localStorage 仍是舊資料）也能看到完整歷史，無需清快取 */
+    var seed = seedChangelog(), byVer = {}, have = {}, changed = false;
+    seed.forEach(function (v) { byVer[v.version] = v; });
+    list.forEach(function (v) {
+      have[v.version] = true;
+      if (!v.type && byVer[v.version]) { v.type = byVer[v.version].type; changed = true; }
+    });
+    seed.forEach(function (v) { if (!have[v.version]) { list.push(v); changed = true; } });
+    if (changed) {
+      list.sort(function (a, b) { return verNum(b.version) - verNum(a.version); });
+      write(K_LOG, list);
+    }
     return list;
   }
   /* 依類型推算下一個版號（以最新一筆為基準）*/
