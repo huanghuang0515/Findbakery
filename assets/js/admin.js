@@ -549,12 +549,12 @@
     var md = A.media();
     var uploaded = md.filter(function (m) { return !m.seed; });
     var bytes = uploaded.reduce(function (s, m) { var src = m.src || ''; return s + (src.indexOf('data:') === 0 ? Math.floor(src.length * 0.75) : 0); }, 0);
-    var cards = statRow(
+    var statCards = statRow(
       statCard(md.length + ' 個', '素材總數') +
       statCard(uploaded.length + ' 個', '自訂上傳') +
       statCard((md.length - uploaded.length) + ' 個', '內建素材') +
       statCard(fmtBytes(bytes), '本機已用（估）'));
-    return cards +
+    return statCards +
       '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.media().length + ' 個檔案。上傳僅存於本機瀏覽器（demo，請小於 1.5MB）。</p>' +
         '<label class="btn btn--primary media-upload">＋ 上傳圖片<input type="file" id="mediaUpload" accept="image/*" hidden></label></div>' +
       '<div class="media-grid">' + cards + '</div>';
