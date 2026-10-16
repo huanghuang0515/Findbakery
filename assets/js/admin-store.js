@@ -450,6 +450,9 @@ window.GGAdmin = (function () {
      type：major（重大，主碼+1）／feature（新功能，中碼+1）／optimize（優化，尾碼+1）*/
   function seedChangelog() {
     return [
+      { version: 'v1.8.0', date: '2026.10.16', author: 'Amy 陳', type: 'feature', items: [
+        '後台 7 個模組頁（訂單／會員／商品／優惠券／數據行銷／點數／媒體庫）頂端新增數據卡，沿用儀表板 stat 元件即時統計',
+        '修正媒體庫因變數名衝突導致的版面跑版' ] },
       { version: 'v1.7.2', date: '2026.10.14', author: 'Amy 陳', type: 'optimize', items: [
         '版本紀錄支援既有資料自動遷移：新版本會自動補進既有紀錄，無需清除快取' ] },
       { version: 'v1.7.1', date: '2026.10.14', author: 'Amy 陳', type: 'optimize', items: [
