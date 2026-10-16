@@ -124,6 +124,21 @@
   function statCard(num, label) {
     return '<div class="stat"><span class="stat__num">' + num + '</span><span class="stat__lbl">' + label + '</span></div>';
   }
+  /* 各頁頂端數據卡列（沿用儀表板的 stat 元件） */
+  function statRow(cards) { return '<div class="stat-grid stat-grid--4">' + cards + '</div>'; }
+  function daysUntil(ymd) {
+    var p = String(ymd || '').split('.');
+    if (p.length < 3) return Infinity;
+    var d = new Date(+p[0], (+p[1]) - 1, +p[2]);
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    return Math.ceil((d - now) / 86400000);
+  }
+  function fmtBytes(b) {
+    if (!b) return '—';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return Math.round(b / 1024) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
   function orderRowStatic(o) {
     return '<tr><td class="ord__no">' + esc(o.no) + '</td><td>' + esc(o.customer) + '</td>' +
            '<td class="ord__total">' + money(o.total) + '</td><td>' + statusTag(o.status) + '</td></tr>';
@@ -148,7 +163,17 @@
         '<td><button class="admin-del" type="button" data-del aria-label="刪除">刪除</button></td>' +
       '</tr>';
     }).join('');
-    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.products().length + ' 項商品，改價／庫存即時儲存並連動前台。</p>' +
+    var ps = A.products();
+    var activeN = ps.filter(function (p) { return p.active !== false; }).length;
+    var lowN = ps.filter(function (p) { return p.active !== false && typeof p.stock === 'number' && p.stock > 0 && p.stock <= 10; }).length;
+    var outN = ps.filter(function (p) { return typeof p.stock === 'number' && p.stock <= 0; }).length;
+    var cards = statRow(
+      statCard(ps.length + ' 項', '商品總數') +
+      statCard(activeN + ' 項', '上架中') +
+      statCard(lowN + ' 項', '低庫存（≤10）') +
+      statCard(outN + ' 項', '缺貨（0 件）'));
+    return cards +
+      '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.products().length + ' 項商品，改價／庫存即時儲存並連動前台。</p>' +
         '<button class="btn btn--primary" type="button" id="addProductBtn">＋ 新增商品</button></div>' +
       '<div class="ord-wrap"><table class="ord-table admin-table"><thead><tr><th>圖</th><th>名稱</th><th>分類</th><th>價格</th><th>庫存</th><th>狀態</th><th>操作</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>';
@@ -219,7 +244,16 @@
         '<td><select class="admin-select" data-status>' + opts + '</select></td>' +
       '</tr>';
     }).join('');
-    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.orders().length + ' 筆訂單，可直接切換狀態。</p></div>' +
+    var os = A.orders();
+    var pending = os.filter(function (o) { return o.status === '處理中' || o.status === '備貨中' || o.status === '配送中'; }).length;
+    var done = os.filter(function (o) { return o.status === '已完成'; }).length;
+    var cards = statRow(
+      statCard(os.length + ' 筆', '訂單總數') +
+      statCard(pending + ' 筆', '待處理') +
+      statCard(done + ' 筆', '已完成') +
+      statCard(money(A.revenue()), '營業額（未取消）'));
+    return cards +
+      '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.orders().length + ' 筆訂單，可直接切換狀態。</p></div>' +
       '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>訂單編號</th><th>日期</th><th>端別</th><th>顧客</th><th>內容</th><th>金額</th><th>狀態</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>';
   }
@@ -254,7 +288,18 @@
       return '<button class="admin-tab' + (t === filter ? ' is-active' : '') + '" type="button" data-filter="' + t + '">' +
         (t === 'all' ? '全部' : t + ' 端') + '</button>';
     }).join('');
-    return '<div class="admin-toolbar"><div class="admin-tabs">' + tabs + '</div>' +
+    var all = A.members();
+    var ms = A.memberStats();
+    var totalSpend = all.reduce(function (s, m) { return s + (m.spendTotal || 0); }, 0);
+    var totalOrders = all.reduce(function (s, m) { return s + (m.orderCount || 0); }, 0);
+    var avgSpend = all.length ? Math.round(totalSpend / all.length) : 0;
+    var cards = statRow(
+      statCard(ms.total + ' 位', '會員數（C ' + ms.C + '／B ' + ms.B + '）') +
+      statCard(money(totalSpend), '總累積消費') +
+      statCard(money(avgSpend), '平均會員消費') +
+      statCard(totalOrders + ' 筆', '累計訂單數'));
+    return cards +
+      '<div class="admin-toolbar"><div class="admin-tabs">' + tabs + '</div>' +
         '<p class="admin-hint">' + list.length + ' 位會員</p></div>' +
       '<div class="ord-wrap"><table class="ord-table"><thead><tr><th>姓名</th><th>端別</th><th>等級</th><th>Email</th><th>電話</th><th>累積消費</th><th>訂單</th><th>加入</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>';
@@ -282,7 +327,17 @@
       '</li>';
     }).join('');
 
-    return '<section class="admin-panel"><h2 class="admin-panel__h">消費商品排行</h2>' +
+    var mem = A.members();
+    var reach = mem.filter(function (m) { return m.email; }).length;
+    var mkSpend = mem.reduce(function (s, m) { return s + (m.spendTotal || 0); }, 0);
+    var highValue = mem.filter(function (m) { return (m.spendTotal || 0) >= 10000; }).length;
+    var cards = statRow(
+      statCard(mem.length + ' 位', '會員總數') +
+      statCard(reach + ' 位', '可寄送 Email') +
+      statCard(money(mkSpend), '名單總累積消費') +
+      statCard(highValue + ' 位', '高價值（≥$10,000）'));
+    return cards +
+      '<section class="admin-panel"><h2 class="admin-panel__h">消費商品排行</h2>' +
         '<ul class="rank-list">' + topHtml + '</ul>' +
         '<p class="panel__note panel__note--tag">此排行同步至後台數據中心，可作為 email 廣告行銷與再行銷推薦依據。</p>' +
       '</section>' +
@@ -376,7 +431,18 @@
         '<td><button class="btn btn--line btn--xs" type="button" data-add>＋100</button> ' +
             '<button class="btn btn--line btn--xs" type="button" data-sub>－100</button></td></tr>';
     }).join('');
-    return '<section class="admin-panel"><h2 class="admin-panel__h">點數規則</h2>' +
+    var mp = A.memberPoints();
+    var totalPts = mp.reduce(function (s, m) { return s + (m.points || 0); }, 0);
+    var holders = mp.filter(function (m) { return (m.points || 0) > 0; }).length;
+    var redeemVal = totalPts * (c.redeemRate || 0);
+    var avgPts = mp.length ? Math.round(totalPts / mp.length) : 0;
+    var cards = statRow(
+      statCard(totalPts.toLocaleString('en-US') + ' 點', '已發行總點數') +
+      statCard(money(redeemVal), '可折抵金額') +
+      statCard(holders + ' 位', '有點數會員') +
+      statCard(avgPts + ' 點', '平均每人點數'));
+    return cards +
+      '<section class="admin-panel"><h2 class="admin-panel__h">點數規則</h2>' +
       '<form class="admin-form" id="ptForm"><div class="form-grid">' +
         '<div class="field"><label for="ptEarnPer">每消費金額（元）</label><input id="ptEarnPer" type="number" min="1" value="' + c.earnPer + '"></div>' +
         '<div class="field"><label for="ptEarnPts">可得點數</label><input id="ptEarnPts" type="number" min="0" value="' + c.earnPoints + '"></div>' +
@@ -418,7 +484,17 @@
         '<td><button class="admin-toggle' + (c.active ? '' : ' is-off') + '" type="button" data-toggle>' + (c.active ? '啟用中' : '已停用') + '</button></td>' +
         '<td><button class="admin-del" type="button" data-del>刪除</button></td></tr>';
     }).join('');
-    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.coupons().length + ' 張優惠券。</p>' +
+    var cs = A.coupons();
+    var activeN = cs.filter(function (x) { return x.active; }).length;
+    var usedN = cs.reduce(function (s, x) { return s + (x.used || 0); }, 0);
+    var soonN = cs.filter(function (x) { var d = daysUntil(x.expiry); return x.active && d >= 0 && d <= 30; }).length;
+    var cards = statRow(
+      statCard(cs.length + ' 張', '優惠券總數') +
+      statCard(activeN + ' 張', '啟用中') +
+      statCard(usedN.toLocaleString('en-US') + ' 次', '累計使用') +
+      statCard(soonN + ' 張', '30 天內到期'));
+    return cards +
+      '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.coupons().length + ' 張優惠券。</p>' +
         '<button class="btn btn--primary" type="button" id="addCouponBtn">＋ 新增優惠券</button></div>' +
       '<section class="admin-panel admin-panel--form" id="couponForm" hidden><h2 class="admin-panel__h">新增優惠券</h2>' +
       '<form class="admin-form" id="cpForm"><div class="form-grid">' +
@@ -470,7 +546,16 @@
         '<div class="media-card__act"><button class="btn btn--line btn--xs" type="button" data-copy>複製路徑</button>' +
           (m.seed ? '' : '<button class="admin-del" type="button" data-del>刪除</button>') + '</div></figure>';
     }).join('');
-    return '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.media().length + ' 個檔案。上傳僅存於本機瀏覽器（demo，請小於 1.5MB）。</p>' +
+    var md = A.media();
+    var uploaded = md.filter(function (m) { return !m.seed; });
+    var bytes = uploaded.reduce(function (s, m) { var src = m.src || ''; return s + (src.indexOf('data:') === 0 ? Math.floor(src.length * 0.75) : 0); }, 0);
+    var cards = statRow(
+      statCard(md.length + ' 個', '素材總數') +
+      statCard(uploaded.length + ' 個', '自訂上傳') +
+      statCard((md.length - uploaded.length) + ' 個', '內建素材') +
+      statCard(fmtBytes(bytes), '本機已用（估）'));
+    return cards +
+      '<div class="admin-toolbar"><p class="admin-hint">共 ' + A.media().length + ' 個檔案。上傳僅存於本機瀏覽器（demo，請小於 1.5MB）。</p>' +
         '<label class="btn btn--primary media-upload">＋ 上傳圖片<input type="file" id="mediaUpload" accept="image/*" hidden></label></div>' +
       '<div class="media-grid">' + cards + '</div>';
   }
