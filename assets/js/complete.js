@@ -19,6 +19,7 @@
   GG.clearCart();
   if (GG.clearCoupon) GG.clearCoupon();
   if (GG.clearPointsRedeem) GG.clearPointsRedeem();
+  if (GG.clearShip) GG.clearShip();
   if (GG.mountBadge) GG.mountBadge();
 
   /* 點數回饋與折抵反映到會員點數帳（demo）；以 pointsSettled 防止重整重複計算 */

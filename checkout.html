@@ -95,9 +95,13 @@
             <legend class="fieldset__legend"><span class="n">2</span>配送方式</legend>
             <div class="choice" id="deliveryChoice">
               <label><input type="radio" name="delivery" value="宅配到府" checked><span class="choice__body"><span class="t">宅配到府</span><span class="d">隔日冷藏宅配，滿 $800 免運，未滿收 $120。</span></span></label>
-              <label><input type="radio" name="delivery" value="門市自取"><span class="choice__body"><span class="t">門市自取</span><span class="d">於預約時段至門市取貨，運費另計於現場。</span></span></label>
+              <label><input type="radio" name="delivery" value="門市自取"><span class="choice__body"><span class="t">門市自取</span><span class="d">於預約時段至門市取貨，免運費。</span></span></label>
             </div>
             <div class="form-grid" style="margin-top:20px">
+              <div class="field field--full" id="zoneField">
+                <label for="shipZone">配送區域</label>
+                <select id="shipZone" name="shipZone"></select>
+              </div>
               <div class="field field--full" id="addrField">
                 <label for="address">收件地址<span class="req">*</span></label>
                 <input id="address" name="address" type="text" autocomplete="street-address">

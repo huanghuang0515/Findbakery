@@ -145,18 +145,52 @@ window.GG = (function () {
       return sum + (p ? p.price * it.qty : 0);
     }, 0);
   }
-  /* 原始運費（未計免運券）：後台「運費管理」gg.admin.shipping 若有設定則優先採用 */
+  /* ---- 配送情境（門市自取／配送區域；由結帳頁設定）---- */
+  var PICKUP_KEY = 'gg.ship.pickup';   /* '1' = 門市自取 */
+  var ZONE_KEY   = 'gg.ship.zone';     /* 選定的區域 id */
+  /* 後台「運費管理」尚未初始化時的預設（與 admin-store 的 seedShipping 一致）；
+     後台一旦有設定（gg.admin.shipping）即以後台為準。 */
+  var DEFAULT_SHIP = {
+    freeThreshold: FREE_SHIP, flatRate: SHIP_FEE, pickup: true,
+    zones: [
+      { id: 'main', name: '台灣本島', fee: SHIP_FEE },
+      { id: 'offshore', name: '離島（澎湖／金門／馬祖）', fee: 250 }
+    ]
+  };
+  function shipCfg() { return read('gg.admin.shipping', null) || DEFAULT_SHIP; }
+  function isPickup() { try { return localStorage.getItem(PICKUP_KEY) === '1'; } catch (e) { return false; } }
+  function setPickup(on) {
+    try { if (on) localStorage.setItem(PICKUP_KEY, '1'); else localStorage.removeItem(PICKUP_KEY); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+  }
+  function getZone() { try { return localStorage.getItem(ZONE_KEY) || ''; } catch (e) { return ''; } }
+  function setZone(id) {
+    try { if (id) localStorage.setItem(ZONE_KEY, id); else localStorage.removeItem(ZONE_KEY); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+  }
+  function clearShip() { try { localStorage.removeItem(PICKUP_KEY); localStorage.removeItem(ZONE_KEY); } catch (e) {} }
+  /* 後台設定的配送區域清單（供結帳頁選擇）*/
+  function shippingZones() {
+    var c = shipCfg();
+    return (c && Array.isArray(c.zones)) ? c.zones : [];
+  }
+  /* 原始運費（未計免運券）：依後台「運費管理」gg.admin.shipping，
+     門市自取免運、依選定區域採區域費率、滿額免運。 */
   function baseShipping() {
     var s = subtotal();
     if (s === 0) return 0;
-    var free = FREE_SHIP, fee = SHIP_FEE;
-    try {
-      var r = localStorage.getItem('gg.admin.shipping');
-      if (r) { var c = JSON.parse(r);
-        if (c && c.freeThreshold != null) free = c.freeThreshold;
-        if (c && c.flatRate != null) fee = c.flatRate; }
-    } catch (e) {}
-    return s >= free ? 0 : fee;
+    var c = shipCfg();
+    /* 門市自取：後台開放自取時免運 */
+    if (isPickup() && (!c || c.pickup !== false)) return 0;
+    var free = (c && c.freeThreshold != null) ? c.freeThreshold : FREE_SHIP;
+    if (s >= free) return 0;
+    /* 配送區域費率；未選或查無則用基本運費 */
+    var fee = (c && c.flatRate != null) ? c.flatRate : SHIP_FEE;
+    var zid = getZone();
+    if (zid && c && Array.isArray(c.zones)) {
+      for (var i = 0; i < c.zones.length; i++) if (c.zones[i].id === zid) { fee = c.zones[i].fee; break; }
+    }
+    return fee;
   }
   /* 實際運費：套用有效的「免運」優惠券時為 0 */
   function shipping() {
@@ -213,6 +247,18 @@ window.GG = (function () {
   function clearCoupon() {
     try { localStorage.removeItem(COUPON_KEY); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent('gg:cartchange', { detail: { count: count() } })); } catch (e) {}
+  }
+  /* 下單後讓後台「優惠券管理」的使用次數 +1（呼叫端需自行防止重複計算）*/
+  function markCouponUsed(code) {
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return;
+    var list = read('gg.admin.coupons', null);
+    if (!Array.isArray(list)) return;
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].code).toUpperCase() === code) { list[i].used = (list[i].used || 0) + 1; break; }
+    }
+    write('gg.admin.coupons', list);
+    try { window.dispatchEvent(new CustomEvent('gg:adminchange', { detail: { what: 'coupons' } })); } catch (e) {}
   }
   /* 目前套用且仍有效的優惠券（失效則回 null，不折抵）*/
   function appliedCoupon() {
@@ -360,7 +406,9 @@ window.GG = (function () {
     getCart: getCart, addItem: addItem, setQty: setQty, removeItem: removeItem, clearCart: clearCart,
     count: count, subtotal: subtotal, shipping: shipping, total: total, lines: lines,
     discount: discount, appliedCoupon: appliedCoupon, checkCoupon: checkCoupon,
-    applyCoupon: applyCoupon, clearCoupon: clearCoupon,
+    applyCoupon: applyCoupon, clearCoupon: clearCoupon, markCouponUsed: markCouponUsed,
+    baseShipping: baseShipping, isPickup: isPickup, setPickup: setPickup,
+    getZone: getZone, setZone: setZone, clearShip: clearShip, shippingZones: shippingZones,
     shippingWaived: shippingWaived, discountLine: discountLine, pointsForAmount: pointsForAmount,
     pointsBalance: pointsBalance, pointsRedeemRate: pointsRedeemRate,
     getPointsRedeem: getPointsRedeem, setPointsRedeem: setPointsRedeem, clearPointsRedeem: clearPointsRedeem,

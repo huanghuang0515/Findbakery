@@ -450,6 +450,10 @@ window.GGAdmin = (function () {
      type：major（重大，主碼+1）／feature（新功能，中碼+1）／optimize（優化，尾碼+1）*/
   function seedChangelog() {
     return [
+      { version: 'v1.9.0', date: '2026.10.16', author: 'Amy 陳', type: 'feature', items: [
+        '結帳新增「配送區域」選擇，依後台運費管理的區域費率計運費（本島 $120／離島 $250）',
+        '門市自取改為免運，與後台「開放自取」設定連動',
+        '真實下單後，後台優惠券「已使用」次數自動累加' ] },
       { version: 'v1.8.0', date: '2026.10.16', author: 'Amy 陳', type: 'feature', items: [
         '後台 7 個模組頁（訂單／會員／商品／優惠券／數據行銷／點數／媒體庫）頂端新增數據卡，沿用儀表板 stat 元件即時統計',
         '修正媒體庫因變數名衝突導致的版面跑版' ] },

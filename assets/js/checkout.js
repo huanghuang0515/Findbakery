@@ -144,14 +144,32 @@
   bindCoupon();
   bindPointsRedeem();
 
-  /* ---- 配送方式：門市自取時隱藏地址欄並免除必填 ---- */
+  /* ---- 配送方式：門市自取免運並隱藏地址欄；宅配可選配送區域（連動後台運費管理）---- */
   var addrField = $('#addrField'), addrInput = $('#address');
+  var zoneField = $('#zoneField'), zoneSel = $('#shipZone');
+  function initZones() {
+    if (!zoneSel) return;
+    var zones = GG.shippingZones ? GG.shippingZones() : [];
+    if (!zones.length) { if (zoneField) zoneField.style.display = 'none'; return; }
+    zoneSel.innerHTML = zones.map(function (z) {
+      return '<option value="' + z.id + '">' + z.name + '（運費 ' + GG.money(z.fee) + '）</option>';
+    }).join('');
+    var cur = GG.getZone ? GG.getZone() : '';
+    if (cur) zoneSel.value = cur;
+    if (!zoneSel.value) zoneSel.value = zones[0].id;
+    if (GG.setZone) GG.setZone(zoneSel.value);
+    zoneSel.addEventListener('change', function () { if (GG.setZone) GG.setZone(zoneSel.value); renderSummary(); });
+  }
   function syncDelivery() {
     var pickup = $('input[name="delivery"]:checked').value === '門市自取';
+    if (GG.setPickup) GG.setPickup(pickup);
     addrField.style.display = pickup ? 'none' : '';
+    if (zoneField) zoneField.style.display = pickup ? 'none' : '';
     addrInput.required = !pickup;
     if (pickup) clearError(addrInput);
+    renderSummary();
   }
+  initZones();
   $$('input[name="delivery"]').forEach(function (r) { r.addEventListener('change', syncDelivery); });
   syncDelivery();
 
@@ -229,9 +247,12 @@
       pointsUsed: GG.pointsUsed ? GG.pointsUsed() : 0,
       earnedPoints: GG.pointsForAmount ? GG.pointsForAmount() : null,
       memberEmail: (member ? member.email : null),
+      shipZone: (delivery === '門市自取' ? null : (GG.getZone ? GG.getZone() : null)),
       total: GG.total()
     };
     GG.saveOrder(order);
+    /* 下單後讓後台優惠券「已使用」+1（每張訂單計一次）*/
+    if (order.coupon && GG.markCouponUsed) GG.markCouponUsed(order.coupon);
     /* 購物車於完成頁載入時清空，避免返回時遺失；此處直接前往完成頁 */
     location.href = 'complete.html';
   });
